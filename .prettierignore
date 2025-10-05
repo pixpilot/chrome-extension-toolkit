@@ -2,8 +2,12 @@
 build
 coverage
 node_modules
+
+# Lock files
+package-lock.json
 pnpm-lock.yaml
 pnpm-workspace.yaml
+yarn.lock
 
 # Ignore TypeScript config files to preserve custom formatting
 **/tsconfig*.json
@@ -14,17 +18,63 @@ pnpm-workspace.yaml
 .next/
 .expo/
 dist/
+**/.changeset/
 
 # Exclude auto-generated API client from formatting
 api/client/src/
-
-# Lock files
-package-lock.json
-yarn.lock
 
 # Ignore swagger.json files
 **/swagger.json
 
 # Cloudflare environment types
 cloudflare-env.d.ts
+
+# OS and editor files
+**/.DS_Store
+**/.git/
+**/*.log
+
+# Build and output folders
+**/build/
+**/out/
+**/tmp/
+**/temp/
+**/logs/
+
+# Framework and tool specific
+**/.vercel/
+**/.nuxt/
+**/.firebase/
+
+# IDE and editor specific
+**/.idea/
+**/.vscode/
+**/.yarn/
+**/.history/
+**/.sass-cache/
+**/.nyc_output/
+**/.parcel-cache/
+**/.eslintcache
+**/.cache-loader/
+**/.serverless/
+**/.storybook/
+**/.cypress/
+
+# Miscellaneous
+**/.licenses/
+**/.rollup.cache/
+**/*.tsbuildinfo
+**/*.js.map
+**/*.tgz
+**/*.bak
+**/*.swp
+**/*.tmp
+**/*.pid
+**/*.coverage
+**/*.env*
+**/*.local
+**/.env/
+
+
+
 

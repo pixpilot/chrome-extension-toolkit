@@ -60,6 +60,7 @@
     "@types/react": "catalog:dev",
     "@types/react-dom": "catalog:dev",
     "@vitejs/plugin-react": "catalog:dev",
+    "chrome-messenger": "workspace:*",
     "eslint": "catalog:dev",
     "gulp": "^5.0.1",
     "gulp-zip": "^6.1.0",

@@ -1,4 +1,3 @@
-import { Button } from '@internal/ui';
 import { useEffect, useState } from 'react';
 
 const TIME_PAD_LENGTH = 2;
@@ -33,7 +32,7 @@ export function NewTab() {
           backgroundImage: "url('https://source.unsplash.com/random')",
         }}
       />
-      <Button>Hi</Button>
+
       <span></span>
       <h1 className="my-8 text-8xl text-cyan-400 uppercase">{time}</h1>
       <p className="my-2 text-xs text-gray-400">Chrome Extension Template</p>

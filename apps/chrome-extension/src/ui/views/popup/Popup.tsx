@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
+import { exampleEffect, exampleMessage, exampleState } from '../../../messages';
 
 export function Popup() {
   const [count, setCount] = useState(0);
+  const [_value] = exampleState.useMessage({ value: 0 });
 
   const minus = () => {
     if (count > 0) setCount(count - 1);
@@ -15,13 +17,21 @@ export function Popup() {
     });
   }, []);
 
+  exampleEffect.useMessageEffect((data) => {
+    console.warn('Popup received effect:', data);
+  });
+
   useEffect(() => {
     chrome.storage.sync
       .set({ count })
       .then(() => {})
       .catch(console.error);
-    chrome.runtime
-      .sendMessage({ type: 'COUNT', count })
+    exampleMessage
+      .send({ text: `Count changed to ${count}` })
+      .then(() => {})
+      .catch(console.error);
+    exampleState
+      .send({ value: count })
       .then(() => {})
       .catch(console.error);
   }, [count]);
@@ -49,6 +59,7 @@ export function Popup() {
           +
         </button>
       </div>
+      <p className="my-4 text-lg">Value: {_value.value}</p>
       <p className="my-2 text-xs text-gray-400">Chrome Extension Template</p>
     </main>
   );

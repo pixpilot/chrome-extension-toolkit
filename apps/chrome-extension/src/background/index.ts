@@ -1,10 +1,8 @@
+import { exampleMessage } from '../messages';
+
 console.warn('background is running');
 
-chrome.runtime.onMessage.addListener((request: { type: string; count?: number }) => {
-  if (request.type === 'COUNT') {
-    console.warn(
-      'background has received a message from popup, and count is ',
-      request.count,
-    );
-  }
+exampleMessage.onMessage((data) => {
+  console.warn('background has received a message: ', data.text);
+  return true;
 });
