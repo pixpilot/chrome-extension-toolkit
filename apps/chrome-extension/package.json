@@ -53,7 +53,6 @@
     "@internal/tsconfig": "workspace:*",
     "@internal/ui": "workspace:*",
     "@internal/vitest-config": "workspace:*",
-    "@pixpilot/chrome-messenger": "workspace:*",
     "@tailwindcss/vite": "catalog:dev",
     "@testing-library/jest-dom": "catalog:dev",
     "@types/chrome": "catalog:dev",

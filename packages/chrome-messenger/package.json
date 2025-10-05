@@ -1,5 +1,5 @@
 {
-  "name": "@pixpilot/chrome-messenger",
+  "name": "chrome-extension-messenger",
   "type": "module",
   "version": "0.0.1",
   "packageManager": "pnpm@10.17.0",
