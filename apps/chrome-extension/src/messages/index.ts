@@ -1,5 +1,8 @@
-import { createMessage } from 'chrome-messenger';
-import { createMessageEffect, createMessageState } from 'chrome-messenger/react';
+import { createMessage } from 'chrome-extension-messenger';
+import {
+  createMessageEffect,
+  createMessageState,
+} from 'chrome-extension-messenger/react';
 
 const exampleMessage = createMessage<{ text: string }, boolean>('EXAMPLE');
 const exampleEffect = createMessageEffect<{ count: number }, void>('EXAMPLE_EFFECT');

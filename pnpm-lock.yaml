@@ -199,7 +199,7 @@ importers:
       '@vitejs/plugin-react':
         specifier: catalog:dev
         version: 5.0.4(vite@7.1.9(@types/node@22.18.8)(jiti@2.6.1)(lightningcss@1.30.1)(terser@5.44.0)(tsx@4.20.6)(yaml@2.8.1))
-      chrome-messenger:
+      chrome-extension-messenger:
         specifier: workspace:*
         version: link:../../packages/chrome-messenger
       eslint:
