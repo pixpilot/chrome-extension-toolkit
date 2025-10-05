@@ -1,0 +1,23 @@
+{
+  "extends": [
+    "@internal/tsconfig/internal-package.json"
+  ],
+  "compilerOptions": {
+    "jsx": "preserve",
+    "lib": [
+      "ES2022",
+      "dom",
+      "dom.iterable"
+    ],
+    "rootDir": "."
+  },
+  "include": [
+    "src",
+    "index.ts",
+    "*.config.ts",
+    "test"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
+}

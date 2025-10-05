@@ -1,0 +1,75 @@
+{
+  "name": "chrome-extension",
+  "displayName": "Chrome Extension",
+  "type": "module",
+  "version": "1.0.0",
+  "description": "Modern Chrome extension template with Vite, React, TypeScript, and Tailwind CSS",
+  "author": "ccpu",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ccpu/chrome-extension-template.git"
+  },
+  "keywords": [
+    "chrome-extension",
+    "react",
+    "vite",
+    "typescript",
+    "tailwindcss",
+    "template"
+  ],
+  "engines": {
+    "node": ">=14.18.0"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "zip": "pnpm run build && node src/zip.js",
+    "typecheck": "tsc --noEmit",
+    "tsc:watch": "tsc --noEmit --watch",
+    "lint": "eslint",
+    "lint:fix": "eslint --fix",
+    "lint:README": "markdownlint README.md",
+    "lint:README:fix": "markdownlint README.md --fix",
+    "format": "prettier --check .",
+    "format:fix": "prettier --write .",
+    "fix:all": "pnpm run lint:fix && pnpm run lint:README:fix && pnpm run format:fix",
+    "deps:update": "npx taze -r -w && pnpm install",
+    "deps:update:major": "npx taze major -r -w && pnpm install",
+    "clean": "git clean -xdf .cache .turbo dist",
+    "clean:all": "git clean -xdf .cache .turbo dist node_modules"
+  },
+  "dependencies": {
+    "@internal/configs": "workspace:*",
+    "@internal/ui": "workspace:*",
+    "react": "catalog:prod",
+    "react-dom": "catalog:prod"
+  },
+  "devDependencies": {
+    "@crxjs/vite-plugin": "^2.2.0",
+    "@internal/eslint-config": "workspace:*",
+    "@internal/prettier-config": "workspace:*",
+    "@internal/tsconfig": "workspace:*",
+    "@internal/ui": "workspace:*",
+    "@internal/vitest-config": "workspace:*",
+    "@tailwindcss/vite": "catalog:dev",
+    "@testing-library/jest-dom": "catalog:dev",
+    "@types/chrome": "catalog:dev",
+    "@types/node": "catalog:dev",
+    "@types/react": "catalog:dev",
+    "@types/react-dom": "catalog:dev",
+    "@vitejs/plugin-react": "catalog:dev",
+    "eslint": "catalog:dev",
+    "gulp": "^5.0.1",
+    "gulp-zip": "^6.1.0",
+    "husky": "^9.1.7",
+    "prettier": "^3.6.2",
+    "prettier-plugin-tailwindcss": "^0.6.14",
+    "tailwindcss": "catalog:dev",
+    "typescript": "catalog:dev",
+    "typescript-eslint": "catalog:dev",
+    "vite": "catalog:dev"
+  },
+  "prettier": "@internal/prettier-config"
+}

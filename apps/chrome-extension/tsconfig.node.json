@@ -1,0 +1,9 @@
+{
+  "compilerOptions": {
+    "composite": true,
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "strictNullChecks": true
+  },
+  "include": ["vite.config.ts", "src/manifest.ts", "vitest.config.ts"]
+}

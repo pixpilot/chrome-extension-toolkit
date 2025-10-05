@@ -1,0 +1,33 @@
+{
+  "name": "@internal/eslint-config",
+  "type": "module",
+  "version": "0.3.0",
+  "private": true,
+  "exports": {
+    "./base": "./base.mjs",
+    "./nextjs": "./nextjs.mjs",
+    "./react": "./react.mjs"
+  },
+  "scripts": {
+    "clean": "git clean -xdf .cache .turbo dist",
+    "clean:all": "git clean -xdf .cache .turbo dist node_modules",
+    "format": "prettier --check . --ignore-path ../../.gitignore --ignore-path ../../.prettierignore",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@pixpilot/eslint-config": "^2.8.0",
+    "@pixpilot/eslint-config-next": "^0.0.24",
+    "@pixpilot/eslint-config-react": "^0.4.6",
+    "eslint-plugin-jest": "^29.0.1",
+    "eslint-plugin-turbo": "^2.5.8"
+  },
+  "devDependencies": {
+    "@internal/prettier-config": "workspace:*",
+    "@internal/tsconfig": "workspace:*",
+    "eslint": "catalog:dev",
+    "prettier": "catalog:dev",
+    "typescript": "catalog:dev",
+    "typescript-eslint": "catalog:dev"
+  },
+  "prettier": "@internal/prettier-config"
+}

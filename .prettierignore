@@ -1,0 +1,30 @@
+# Ignore artifacts:
+build
+coverage
+node_modules
+pnpm-lock.yaml
+pnpm-workspace.yaml
+
+# Ignore TypeScript config files to preserve custom formatting
+**/tsconfig*.json
+
+# Common ignore patterns
+.cache/
+.turbo/
+.next/
+.expo/
+dist/
+
+# Exclude auto-generated API client from formatting
+api/client/src/
+
+# Lock files
+package-lock.json
+yarn.lock
+
+# Ignore swagger.json files
+**/swagger.json
+
+# Cloudflare environment types
+cloudflare-env.d.ts
+

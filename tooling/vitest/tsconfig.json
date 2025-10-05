@@ -1,0 +1,5 @@
+{
+  "extends": "@internal/tsconfig/internal-package.json",
+  "include": ["."],
+  "exclude": ["node_modules", "dist"]
+}

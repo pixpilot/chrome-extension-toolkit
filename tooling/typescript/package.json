@@ -1,0 +1,12 @@
+{
+  "name": "@internal/tsconfig",
+  "version": "0.1.0",
+  "private": true,
+  "files": [
+    "*.json"
+  ],
+  "devDependencies": {
+    "@pixpilot/dev-config": "catalog:dev"
+  },
+  "prettier": "@internal/prettier-config"
+}

@@ -1,0 +1,15 @@
+node_modules
+**/node_modules
+dist
+.turbo
+.git
+.gitignore
+.cache
+*.log
+*.md
+README.md
+.env
+.env.local
+.env.*.local
+coverage
+.nyc_output
