@@ -1,15 +1,12 @@
 {
-  "name": "chrome-messenger",
+  "name": "chrome-extension-testing-tools",
   "type": "module",
   "version": "0.0.0",
   "packageManager": "pnpm@10.17.0",
   "author": "",
   "license": "MIT",
   "keywords": [],
-  "exports": {
-    ".": "./src/index.ts",
-    "./react": "./src/react/index.ts"
-  },
+  "exports": "./src/index.ts",
   "files": [
     "dist"
   ],
@@ -20,11 +17,6 @@
         "types": "./dist/index.d.ts",
         "import": "./dist/index.js",
         "require": "./dist/index.cjs"
-      },
-      "./react": {
-        "types": "./dist/react/index.d.ts",
-        "import": "./dist/react/index.js",
-        "require": "./dist/react/index.cjs"
       }
     },
     "main": "./dist/index.cjs",
@@ -44,23 +36,15 @@
     "lint": "eslint",
     "format": "prettier --check . --ignore-path ../../.gitignore --ignore-path ../../.prettierignore"
   },
-  "peerDependencies": {
-    "react": "*",
-    "react-dom": "*"
-  },
   "devDependencies": {
     "@internal/eslint-config": "workspace:*",
     "@internal/prettier-config": "workspace:*",
     "@internal/rollup-config": "workspace:*",
     "@internal/tsconfig": "workspace:*",
     "@internal/vitest-config": "workspace:*",
-    "@testing-library/react": "catalog:dev",
     "@types/chrome": "catalog:dev",
     "@types/node": "catalog:dev",
-    "@types/react": "catalog:dev",
-    "chrome-extension-testing-tools": "workspace:*",
     "eslint": "catalog:dev",
-    "jsdom": "catalog:dev",
     "rollup": "catalog:dev",
     "typescript": "catalog:dev"
   },

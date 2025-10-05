@@ -1,3 +1,3 @@
-import baseConfig from '@internal/vitest-config';
+import reactConfig from '@internal/vitest-config/react';
 
-export default baseConfig;
+export default reactConfig;
