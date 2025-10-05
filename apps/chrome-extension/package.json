@@ -3,6 +3,7 @@
   "displayName": "Chrome Extension",
   "type": "module",
   "version": "1.0.0",
+  "private": true,
   "description": "Modern Chrome extension template with Vite, React, TypeScript, and Tailwind CSS",
   "author": "ccpu",
   "license": "MIT",
