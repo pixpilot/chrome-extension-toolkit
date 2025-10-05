@@ -1,20 +1,21 @@
-# Chrome Extension Monorepo Template
+# Chrome Extension Toolkit
 
-A template for building Chrome extensions using a monorepo structure with TypeScript, Vite, and more.
+A collection of npm packages for building Chrome extensions.
 
-## Getting Started
+## Packages
 
-1. Clone the repository
-2. Install dependencies: `pnpm install`
-3. Build the extension: `pnpm build`
-4. Load the extension in Chrome from the `apps/chrome-extension/build` directory
+A type-safe messaging library for Chrome extensions with React hooks support.
 
-## Structure
+### [chrome-extension-messenger](./packages/chrome-extension-messengerREADME.md)
 
-- `apps/chrome-extension/`: The main Chrome extension app
-- `packages/`: Shared packages (ui, utils, tooling)
-- `tooling/`: Configuration for linting, formatting, etc.
+Testing utilities and helpers for Chrome extension development.
+
+### [chrome-extension-testing-tools](./packages/chrome-extension-testing-tools/README.md)
 
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for details.
+
+## License
+
+MIT

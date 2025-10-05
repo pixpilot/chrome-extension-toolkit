@@ -201,7 +201,7 @@ importers:
         version: 5.0.4(vite@7.1.9(@types/node@22.18.8)(jiti@2.6.1)(lightningcss@1.30.1)(terser@5.44.0)(tsx@4.20.6)(yaml@2.8.1))
       chrome-extension-messenger:
         specifier: workspace:*
-        version: link:../../packages/chrome-messenger
+        version: link:../../packages/chrome-extension-messenger
       eslint:
         specifier: catalog:dev
         version: 9.37.0(jiti@2.6.1)
@@ -233,40 +233,7 @@ importers:
         specifier: catalog:dev
         version: 7.1.9(@types/node@22.18.8)(jiti@2.6.1)(lightningcss@1.30.1)(terser@5.44.0)(tsx@4.20.6)(yaml@2.8.1)
 
-  packages/chrome-extension-testing-tools:
-    devDependencies:
-      '@internal/eslint-config':
-        specifier: workspace:*
-        version: link:../../tooling/eslint
-      '@internal/prettier-config':
-        specifier: workspace:*
-        version: link:../../tooling/prettier
-      '@internal/rollup-config':
-        specifier: workspace:*
-        version: link:../../tooling/rollup
-      '@internal/tsconfig':
-        specifier: workspace:*
-        version: link:../../tooling/typescript
-      '@internal/vitest-config':
-        specifier: workspace:*
-        version: link:../../tooling/vitest
-      '@types/chrome':
-        specifier: catalog:dev
-        version: 0.1.22
-      '@types/node':
-        specifier: catalog:dev
-        version: 22.18.8
-      eslint:
-        specifier: catalog:dev
-        version: 9.37.0(jiti@2.6.1)
-      rollup:
-        specifier: catalog:dev
-        version: 4.50.0
-      typescript:
-        specifier: catalog:dev
-        version: 5.9.3
-
-  packages/chrome-messenger:
+  packages/chrome-extension-messenger:
     dependencies:
       react:
         specifier: '*'
@@ -311,6 +278,39 @@ importers:
       jsdom:
         specifier: catalog:dev
         version: 27.0.0(postcss@8.5.6)
+      rollup:
+        specifier: catalog:dev
+        version: 4.50.0
+      typescript:
+        specifier: catalog:dev
+        version: 5.9.3
+
+  packages/chrome-extension-testing-tools:
+    devDependencies:
+      '@internal/eslint-config':
+        specifier: workspace:*
+        version: link:../../tooling/eslint
+      '@internal/prettier-config':
+        specifier: workspace:*
+        version: link:../../tooling/prettier
+      '@internal/rollup-config':
+        specifier: workspace:*
+        version: link:../../tooling/rollup
+      '@internal/tsconfig':
+        specifier: workspace:*
+        version: link:../../tooling/typescript
+      '@internal/vitest-config':
+        specifier: workspace:*
+        version: link:../../tooling/vitest
+      '@types/chrome':
+        specifier: catalog:dev
+        version: 0.1.22
+      '@types/node':
+        specifier: catalog:dev
+        version: 22.18.8
+      eslint:
+        specifier: catalog:dev
+        version: 9.37.0(jiti@2.6.1)
       rollup:
         specifier: catalog:dev
         version: 4.50.0
@@ -5816,7 +5816,7 @@ snapshots:
       '@csstools/css-color-parser': 3.1.0(@csstools/css-parser-algorithms@3.0.5(@csstools/css-tokenizer@3.0.4))(@csstools/css-tokenizer@3.0.4)
       '@csstools/css-parser-algorithms': 3.0.5(@csstools/css-tokenizer@3.0.4)
       '@csstools/css-tokenizer': 3.0.4
-      lru-cache: 11.2.1
+      lru-cache: 11.2.2
 
   '@asamuzakjp/dom-selector@6.6.1':
     dependencies:
