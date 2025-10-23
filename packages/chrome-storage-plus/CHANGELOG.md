@@ -1,5 +1,11 @@
 # chrome-storage-plus
 
+## 0.3.0
+
+### Minor Changes
+
+- rename packages and update installation instructions
+
 ## 0.2.0
 
 ### Minor Changes
