@@ -1,4 +1,4 @@
-# Chrome Storage Plus
+# Chrome Storage
 
 A powerful and type-safe Chrome Storage API wrapper with optional built-in encryption support for Chrome extensions.
 
@@ -22,9 +22,9 @@ npm install @pixpilot/chrome-storage
 ### Basic Usage (Type-Safe Storage)
 
 ```typescript
-import { ChromeStoragePlus } from '@pixpilot/chrome-storage';
+import { ChromeStorage } from '@pixpilot/chrome-storage';
 
-const storage = new ChromeStoragePlus();
+const storage = new ChromeStorage();
 
 // Store typed data
 await storage.set('username', 'john_doe');
@@ -83,7 +83,7 @@ try {
 ### Using Sync Storage
 
 ```typescript
-const storage = new ChromeStoragePlus();
+const storage = new ChromeStorage();
 
 // Store in sync storage instead of local
 await storage.set('theme', 'dark', { area: 'sync' });
@@ -93,7 +93,7 @@ const theme = await storage.get<string>('theme', { area: 'sync' });
 ### Key Transformation for Namespacing
 
 ```typescript
-const storage = new ChromeStoragePlus({
+const storage = new ChromeStorage({
   keyTransformer: (key) => `myapp_${key}`,
 });
 
@@ -104,9 +104,9 @@ await storage.set('setting', 'value');
 ### Convenience API
 
 ```typescript
-import { ChromeStoragePlus, createStorageAPI } from '@pixpilot/chrome-storage';
+import { ChromeStorage, createStorageAPI } from '@pixpilot/chrome-storage';
 
-const manager = new ChromeStoragePlus();
+const manager = new ChromeStorage();
 const storage = createStorageAPI(manager);
 
 // Cleaner API without manager reference
@@ -117,13 +117,13 @@ await storage.remove('key');
 
 ## API Reference
 
-### ChromeStoragePlus Class
+### ChromeStorage Class
 
 #### Constructor
 
 ```typescript
 // Constructor signature
-// new ChromeStoragePlus(options?: GenericChromeStorageOptions)
+// new ChromeStorage(options?: GenericChromeStorageOptions)
 ```
 
 Options:
@@ -158,7 +158,7 @@ interface StorageOptions {
 
 ## Advanced Usage: Encryption
 
-For sensitive data, ChromeStoragePlus supports optional AES-GCM encryption with user-provided keys.
+For sensitive data, ChromeStorage supports optional AES-GCM encryption with user-provided keys.
 
 ### ⚠️ Security Notice
 
@@ -167,7 +167,7 @@ For sensitive data, ChromeStoragePlus supports optional AES-GCM encryption with 
 ### Secure Storage with Password-Derived Keys
 
 ```typescript
-import { ChromeStoragePlus } from '@pixpilot/chrome-storage';
+import { ChromeStorage } from '@pixpilot/chrome-storage';
 import { DefaultEncryptionProvider } from '@pixpilot/chrome-storage/default-encryption-provider';
 import { deriveKeyFromPassword } from '@pixpilot/chrome-storage/secure-storage';
 
@@ -181,7 +181,7 @@ await chrome.storage.local.set({ userSalt: salt });
 const encryptionProvider = new DefaultEncryptionProvider({ key });
 
 // Create storage manager with encryption
-const storage = new ChromeStoragePlus({ encryptionProvider });
+const storage = new ChromeStorage({ encryptionProvider });
 
 // Store encrypted data (automatically serialized)
 await storage.set('apiKey', 'secret-key-123', { encrypted: true });
@@ -236,7 +236,7 @@ await removeEncrypted('myKey');
 
 ```typescript
 import type { EncryptionProvider } from '@pixpilot/chrome-storage';
-import { ChromeStoragePlus } from '@pixpilot/chrome-storage';
+import { ChromeStorage } from '@pixpilot/chrome-storage';
 
 // Implement custom encryption logic
 class CustomEncryption implements EncryptionProvider {
@@ -257,7 +257,7 @@ class CustomEncryption implements EncryptionProvider {
   }
 }
 
-const storage = new ChromeStoragePlus({
+const storage = new ChromeStorage({
   encryptionProvider: new CustomEncryption(),
 });
 ```
@@ -266,7 +266,7 @@ const storage = new ChromeStoragePlus({
 
 ```typescript
 // Explicitly disable encryption
-const storage = new ChromeStoragePlus({
+const storage = new ChromeStorage({
   encryptionProvider: null,
 });
 

@@ -45,7 +45,8 @@
     "deps:update": "npx taze -r -w && pnpm install",
     "deps:update:major": "npx taze major -r -w && pnpm install",
     "turbo:gen:init": "pnpm turbo gen init",
-    "changeset": "changeset"
+    "changeset": "changeset",
+    "generate-packages": "node scripts/generate-packages.js"
   },
   "devDependencies": {
     "@changesets/cli": "^2.29.7",

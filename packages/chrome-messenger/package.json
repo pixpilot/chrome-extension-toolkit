@@ -1,12 +1,21 @@
 {
-  "name": "@pixpilot/chrome-testing-tools",
+  "name": "@pixpilot/chrome-messenger",
   "type": "module",
-  "version": "0.3.0",
+  "version": "0.2.0",
   "packageManager": "pnpm@10.19.0",
+  "description": "A type-safe messaging library for Chrome extensions with React hooks support.",
   "author": "",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/pixpilot/chrome-extension-toolkit.git",
+    "directory": "packages/chrome-messenger"
+  },
   "keywords": [],
-  "exports": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./react": "./src/react/index.ts"
+  },
   "files": [
     "dist"
   ],
@@ -17,6 +26,11 @@
         "types": "./dist/index.d.ts",
         "import": "./dist/index.js",
         "require": "./dist/index.cjs"
+      },
+      "./react": {
+        "types": "./dist/react/index.d.ts",
+        "import": "./dist/react/index.js",
+        "require": "./dist/react/index.cjs"
       }
     },
     "main": "./dist/index.cjs",
@@ -36,15 +50,23 @@
     "lint": "eslint",
     "format": "prettier --check . --ignore-path ../../.gitignore --ignore-path ../../.prettierignore"
   },
+  "peerDependencies": {
+    "react": "*",
+    "react-dom": "*"
+  },
   "devDependencies": {
     "@internal/eslint-config": "workspace:*",
     "@internal/prettier-config": "workspace:*",
     "@internal/rollup-config": "workspace:*",
     "@internal/tsconfig": "workspace:*",
     "@internal/vitest-config": "workspace:*",
+    "@pixpilot/chrome-testing-tools": "workspace:*",
+    "@testing-library/react": "catalog:dev",
     "@types/chrome": "catalog:dev",
     "@types/node": "catalog:dev",
+    "@types/react": "catalog:dev",
     "eslint": "catalog:dev",
+    "jsdom": "catalog:dev",
     "rollup": "catalog:dev",
     "typescript": "catalog:dev"
   },

@@ -1,4 +1,4 @@
-import { mockChrome } from 'chrome-extension-testing-tools';
+import { mockChrome } from '@pixpilot/chrome-testing-tools';
 
 // test/chrome-messenger/window-id.test.ts
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';

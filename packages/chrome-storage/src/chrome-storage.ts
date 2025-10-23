@@ -38,7 +38,7 @@ export interface GenericChromeStorageOptions {
    *
    * const { key } = await deriveKeyFromPassword('user-password');
    * const provider = new DefaultEncryptionProvider({ key });
-   * const manager = new ChromeStoragePlus({ encryptionProvider: provider });
+   * const manager = new ChromeStorage({ encryptionProvider: provider });
    * ```
    */
   encryptionProvider?: EncryptionProvider | null;
@@ -48,7 +48,7 @@ export interface GenericChromeStorageOptions {
  * Generic Chrome Storage Manager
  * All methods throw errors on failure for clean error handling
  */
-export class ChromeStoragePlus {
+export class ChromeStorage {
   private keyTransformer: (key: string) => string;
   private encryptionProvider?: EncryptionProvider;
 
@@ -395,7 +395,7 @@ export class ChromeStoragePlus {
 /**
  * Create convenience functions for a storage manager instance
  */
-export function createStorageAPI(manager: ChromeStoragePlus): {
+export function createStorageAPI(manager: ChromeStorage): {
   get: <T = unknown>(key: string, options?: StorageOptions) => Promise<T | undefined>;
   getMultiple: <T = unknown>(
     keys: string[],

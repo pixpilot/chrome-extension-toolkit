@@ -1,7 +1,7 @@
 /**
  * Default encryption provider implementation
  * Uses the generic secure-storage utilities to provide a standard
- * encryption provider for chrome-storage-plus
+ * encryption provider for chrome-storage
  *
  * SECURITY NOTICE:
  * This provider requires a CryptoKey to be provided. The key should be
@@ -9,7 +9,7 @@
  * in memory only. Never store the encryption key itself.
  */
 
-import type { EncryptionProvider } from './chrome-storage-plus';
+import type { EncryptionProvider } from './chrome-storage';
 import type { SecureStorageOptions } from './secure-storage';
 import {
   getEncrypted,

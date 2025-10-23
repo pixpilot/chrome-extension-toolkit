@@ -1,8 +1,8 @@
-import type { EncryptionProvider } from '../src/chrome-storage-plus';
+import type { EncryptionProvider } from '../src/chrome-storage';
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { ChromeStoragePlus, createStorageAPI } from '../src/chrome-storage-plus';
+import { ChromeStorage, createStorageAPI } from '../src/chrome-storage';
 
 // Mock encryption provider
 function createMockEncryptionProvider(): EncryptionProvider {
@@ -91,7 +91,7 @@ function createMockChromeStorage() {
   return mockObj;
 }
 
-describe('chromeStoragePlus', () => {
+describe('chromeStorage', () => {
   let mockChrome: ReturnType<typeof createMockChromeStorage>;
 
   beforeEach(() => {
@@ -103,34 +103,34 @@ describe('chromeStoragePlus', () => {
 
   describe('constructor', () => {
     it('should create instance without encryption provider', () => {
-      const manager = new ChromeStoragePlus();
-      expect(manager).toBeInstanceOf(ChromeStoragePlus);
+      const manager = new ChromeStorage();
+      expect(manager).toBeInstanceOf(ChromeStorage);
     });
 
     it('should accept custom encryption provider', () => {
       const customProvider = createMockEncryptionProvider();
-      const manager = new ChromeStoragePlus({
+      const manager = new ChromeStorage({
         encryptionProvider: customProvider,
       });
-      expect(manager).toBeInstanceOf(ChromeStoragePlus);
+      expect(manager).toBeInstanceOf(ChromeStorage);
     });
 
     it('should disable encryption when explicitly set to null', () => {
-      const manager = new ChromeStoragePlus({ encryptionProvider: null });
-      expect(manager).toBeInstanceOf(ChromeStoragePlus);
+      const manager = new ChromeStorage({ encryptionProvider: null });
+      expect(manager).toBeInstanceOf(ChromeStorage);
     });
 
     it('should accept custom key transformer', () => {
-      const manager = new ChromeStoragePlus({
+      const manager = new ChromeStorage({
         keyTransformer: (key) => `prefix_${key}`,
       });
-      expect(manager).toBeInstanceOf(ChromeStoragePlus);
+      expect(manager).toBeInstanceOf(ChromeStorage);
     });
   });
 
   describe('get/set operations', () => {
     it.skip('should store and retrieve plain data', async () => {
-      const manager = new ChromeStoragePlus({ encryptionProvider: null });
+      const manager = new ChromeStorage({ encryptionProvider: null });
 
       await manager.set('testKey', 'testValue');
       const value = await manager.get('testKey');
@@ -139,7 +139,7 @@ describe('chromeStoragePlus', () => {
 
     it('should use encryption provider for encrypted operations', async () => {
       const mockProvider = createMockEncryptionProvider();
-      const manager = new ChromeStoragePlus({
+      const manager = new ChromeStorage({
         encryptionProvider: mockProvider,
       });
 
@@ -152,7 +152,7 @@ describe('chromeStoragePlus', () => {
     });
 
     it('should throw error when encryption provider not configured', async () => {
-      const manager = new ChromeStoragePlus({ encryptionProvider: null });
+      const manager = new ChromeStorage({ encryptionProvider: null });
 
       await expect(manager.set('key', 'value', { encrypted: true })).rejects.toThrow(
         'Encryption provider not configured',
@@ -162,7 +162,7 @@ describe('chromeStoragePlus', () => {
 
   describe('remove operations', () => {
     it.skip('should remove plain data', async () => {
-      const manager = new ChromeStoragePlus({ encryptionProvider: null });
+      const manager = new ChromeStorage({ encryptionProvider: null });
 
       await manager.set('removeMe', 'value');
       await manager.remove('removeMe');
@@ -173,7 +173,7 @@ describe('chromeStoragePlus', () => {
 
     it('should use encryption provider for encrypted remove', async () => {
       const mockProvider = createMockEncryptionProvider();
-      const manager = new ChromeStoragePlus({
+      const manager = new ChromeStorage({
         encryptionProvider: mockProvider,
       });
 
@@ -184,7 +184,7 @@ describe('chromeStoragePlus', () => {
 
   describe('has operation', () => {
     it.skip('should check existence of plain data', async () => {
-      const manager = new ChromeStoragePlus({ encryptionProvider: null });
+      const manager = new ChromeStorage({ encryptionProvider: null });
 
       await manager.set('existingKey', 'value');
       const exists = await manager.has('existingKey');
@@ -193,7 +193,7 @@ describe('chromeStoragePlus', () => {
 
     it('should use encryption provider for encrypted has', async () => {
       const mockProvider = createMockEncryptionProvider();
-      const manager = new ChromeStoragePlus({
+      const manager = new ChromeStorage({
         encryptionProvider: mockProvider,
       });
 
@@ -204,7 +204,7 @@ describe('chromeStoragePlus', () => {
 
   describe('createStorageAPI', () => {
     it('should create convenience API', () => {
-      const manager = new ChromeStoragePlus();
+      const manager = new ChromeStorage();
       const api = createStorageAPI(manager);
 
       expect(api.get).toBeDefined();
@@ -222,7 +222,7 @@ describe('chromeStoragePlus', () => {
   describe('keyTransformer consistency', () => {
     it('should apply keyTransformer to encrypted get operations', async () => {
       const mockProvider = createMockEncryptionProvider();
-      const manager = new ChromeStoragePlus({
+      const manager = new ChromeStorage({
         keyTransformer: (key) => `dev_${key}`,
         encryptionProvider: mockProvider,
       });
@@ -233,7 +233,7 @@ describe('chromeStoragePlus', () => {
 
     it('should apply keyTransformer to encrypted set operations', async () => {
       const mockProvider = createMockEncryptionProvider();
-      const manager = new ChromeStoragePlus({
+      const manager = new ChromeStorage({
         keyTransformer: (key) => `dev_${key}`,
         encryptionProvider: mockProvider,
       });
@@ -244,7 +244,7 @@ describe('chromeStoragePlus', () => {
 
     it('should apply keyTransformer to encrypted remove operations', async () => {
       const mockProvider = createMockEncryptionProvider();
-      const manager = new ChromeStoragePlus({
+      const manager = new ChromeStorage({
         keyTransformer: (key) => `dev_${key}`,
         encryptionProvider: mockProvider,
       });
@@ -255,7 +255,7 @@ describe('chromeStoragePlus', () => {
 
     it('should apply keyTransformer to encrypted has operations', async () => {
       const mockProvider = createMockEncryptionProvider();
-      const manager = new ChromeStoragePlus({
+      const manager = new ChromeStorage({
         keyTransformer: (key) => `dev_${key}`,
         encryptionProvider: mockProvider,
       });
@@ -266,7 +266,7 @@ describe('chromeStoragePlus', () => {
 
     it('should apply keyTransformer to encrypted remove with multiple keys', async () => {
       const mockProvider = createMockEncryptionProvider();
-      const manager = new ChromeStoragePlus({
+      const manager = new ChromeStorage({
         keyTransformer: (key) => `dev_${key}`,
         encryptionProvider: mockProvider,
       });
@@ -280,7 +280,7 @@ describe('chromeStoragePlus', () => {
   describe('error context in messages', () => {
     it('should include storage area and operation in get error messages', async () => {
       mockChrome.runtime.lastError = { message: 'Storage quota exceeded' };
-      const manager = new ChromeStoragePlus({ encryptionProvider: null });
+      const manager = new ChromeStorage({ encryptionProvider: null });
 
       await expect(manager.get('key')).rejects.toThrow(
         'chrome.storage.local.get failed: Storage quota exceeded',
@@ -291,7 +291,7 @@ describe('chromeStoragePlus', () => {
 
     it('should include storage area and operation in set error messages', async () => {
       mockChrome.runtime.lastError = { message: 'Storage quota exceeded' };
-      const manager = new ChromeStoragePlus({ encryptionProvider: null });
+      const manager = new ChromeStorage({ encryptionProvider: null });
 
       await expect(manager.set('key', 'value')).rejects.toThrow(
         'chrome.storage.local.set failed: Storage quota exceeded',
@@ -302,7 +302,7 @@ describe('chromeStoragePlus', () => {
 
     it('should include storage area and operation in remove error messages', async () => {
       mockChrome.runtime.lastError = { message: 'Operation failed' };
-      const manager = new ChromeStoragePlus({ encryptionProvider: null });
+      const manager = new ChromeStorage({ encryptionProvider: null });
 
       await expect(manager.remove('key')).rejects.toThrow(
         'chrome.storage.local.remove failed: Operation failed',
@@ -313,7 +313,7 @@ describe('chromeStoragePlus', () => {
 
     it('should include storage area and operation in clear error messages', async () => {
       mockChrome.runtime.lastError = { message: 'Operation failed' };
-      const manager = new ChromeStoragePlus({ encryptionProvider: null });
+      const manager = new ChromeStorage({ encryptionProvider: null });
 
       await expect(manager.clear()).rejects.toThrow(
         'chrome.storage.local.clear failed: Operation failed',
@@ -324,7 +324,7 @@ describe('chromeStoragePlus', () => {
 
     it('should include storage area and operation in getBytesInUse error messages', async () => {
       mockChrome.runtime.lastError = { message: 'Operation failed' };
-      const manager = new ChromeStoragePlus({ encryptionProvider: null });
+      const manager = new ChromeStorage({ encryptionProvider: null });
 
       await expect(manager.getBytesInUse()).rejects.toThrow(
         'chrome.storage.local.getBytesInUse failed: Operation failed',
@@ -340,7 +340,7 @@ describe('chromeStoragePlus', () => {
       // Mock decrypt to return invalid JSON
       vi.mocked(mockProvider.decrypt).mockResolvedValue('invalid{json');
 
-      const manager = new ChromeStoragePlus({
+      const manager = new ChromeStorage({
         encryptionProvider: mockProvider,
       });
 
@@ -362,7 +362,7 @@ describe('chromeStoragePlus', () => {
       // Mock decrypt to return valid JSON
       vi.mocked(mockProvider.decrypt).mockResolvedValue('{"name":"test","value":123}');
 
-      const manager = new ChromeStoragePlus({
+      const manager = new ChromeStorage({
         encryptionProvider: mockProvider,
       });
 
@@ -377,7 +377,7 @@ describe('chromeStoragePlus', () => {
       const mockProvider = createMockEncryptionProvider();
       vi.mocked(mockProvider.decrypt).mockResolvedValue('"validString"');
 
-      const manager = new ChromeStoragePlus({
+      const manager = new ChromeStorage({
         encryptionProvider: mockProvider,
       });
 
