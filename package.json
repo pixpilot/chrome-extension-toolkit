@@ -3,6 +3,12 @@
   "private": true,
   "packageManager": "pnpm@10.18.0",
   "description": "A production-ready Chrome extension monorepo template with TypeScript, Vite, Turborepo, and modern tooling for fast development.",
+  "author": "ccpu <m.doaie@hotmail.com>",
+  "homepage": "https://github.com/pixpilot/chrome-extension-toolkit",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/pixpilot/chrome-extension-toolkit.git"
+  },
   "keywords": [
     "chrome-extension",
     "monorepo",
@@ -42,12 +48,12 @@
     "changeset": "changeset"
   },
   "devDependencies": {
-    "@changesets/cli": "^2.29.6",
-    "@commitlint/cli": "^19.8.1",
-    "@commitlint/config-conventional": "^19.8.1",
+    "@changesets/cli": "^2.29.7",
+    "@commitlint/cli": "^20.1.0",
+    "@commitlint/config-conventional": "^20.0.0",
     "@internal/prettier-config": "workspace:*",
     "@pixpilot/dev-config": "catalog:dev",
-    "@pixpilot/workspace-package-generator": "^1.1.5",
+    "@pixpilot/workspace-package-generator": "^2.1.1",
     "@testing-library/jest-dom": "catalog:dev",
     "@turbo/gen": "^2.5.8",
     "@types/chrome": "catalog:dev",
@@ -55,7 +61,7 @@
     "@vitest/ui": "catalog:dev",
     "eslint": "catalog:dev",
     "husky": "^9.1.7",
-    "lint-staged": "^16.2.3",
+    "lint-staged": "^16.2.5",
     "prettier": "catalog:dev",
     "prettier-plugin-tailwindcss": "catalog:dev",
     "tsx": "^4.20.6",
