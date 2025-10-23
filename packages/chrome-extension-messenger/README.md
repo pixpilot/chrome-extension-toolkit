@@ -5,7 +5,7 @@ A simple, type-safe messaging library for Chrome extensions with React hooks sup
 ## Installation
 
 ```bash
-npm install chrome-messenger
+npm install @pixpilot/chrome-messenger
 ```
 
 ## Basic Usage
@@ -13,7 +13,7 @@ npm install chrome-messenger
 ### Regular Messages
 
 ```typescript
-import { createMessage } from 'chrome-messenger';
+import { createMessage } from '@pixpilot/chrome-messenger';
 
 // Create message sender and listener
 const { send: sendNotification, onMessage: onNotification } = createMessage<{
@@ -35,7 +35,7 @@ dispose();
 ### With Response
 
 ```typescript
-import { createMessage } from 'chrome-messenger';
+import { createMessage } from '@pixpilot/chrome-messenger';
 
 const { send: fetchUser, onMessage: onFetchUser } = createMessage<{ id: string }, User>(
   'fetch-user',
@@ -81,7 +81,7 @@ try {
 ### Message Hooks
 
 ```tsx
-import { createMessageState } from 'chrome-messenger/react';
+import { createMessageState } from '@pixpilot/chrome-messenger/react';
 
 // Returns { send, useMessage } object
 export const { send: fetchUser, useMessage: useFetchUser } = createMessageState<
@@ -113,7 +113,7 @@ function MyComponent() {
 ### Message Effects
 
 ```tsx
-import { createMessageEffect } from 'chrome-messenger/react';
+import { createMessageEffect } from '@pixpilot/chrome-messenger/react';
 
 // Create message effect - works like message listener with React hook
 const { send: sendAnalytics, useMessageEffect } = createMessageEffect<

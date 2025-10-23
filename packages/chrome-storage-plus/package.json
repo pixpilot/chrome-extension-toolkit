@@ -1,5 +1,5 @@
 {
-  "name": "@pixpilot/chrome-storage-plus",
+  "name": "@pixpilot/chrome-storage",
   "type": "module",
   "version": "0.1.0",
   "packageManager": "pnpm@10.19.0",

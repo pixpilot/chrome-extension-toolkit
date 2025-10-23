@@ -14,7 +14,7 @@ A powerful and type-safe Chrome Storage API wrapper with optional built-in encry
 ## Installation
 
 ```bash
-npm install @pixpilot/chrome-storage-plus
+npm install @pixpilot/chrome-storage
 ```
 
 ## Quick Start
@@ -22,7 +22,7 @@ npm install @pixpilot/chrome-storage-plus
 ### Basic Usage (Type-Safe Storage)
 
 ```typescript
-import { ChromeStoragePlus } from '@pixpilot/chrome-storage-plus';
+import { ChromeStoragePlus } from '@pixpilot/chrome-storage';
 
 const storage = new ChromeStoragePlus();
 
@@ -104,7 +104,7 @@ await storage.set('setting', 'value');
 ### Convenience API
 
 ```typescript
-import { ChromeStoragePlus, createStorageAPI } from '@pixpilot/chrome-storage-plus';
+import { ChromeStoragePlus, createStorageAPI } from '@pixpilot/chrome-storage';
 
 const manager = new ChromeStoragePlus();
 const storage = createStorageAPI(manager);
@@ -167,9 +167,9 @@ For sensitive data, ChromeStoragePlus supports optional AES-GCM encryption with 
 ### Secure Storage with Password-Derived Keys
 
 ```typescript
-import { ChromeStoragePlus } from '@pixpilot/chrome-storage-plus';
-import { DefaultEncryptionProvider } from '@pixpilot/chrome-storage-plus/default-encryption-provider';
-import { deriveKeyFromPassword } from '@pixpilot/chrome-storage-plus/secure-storage';
+import { ChromeStoragePlus } from '@pixpilot/chrome-storage';
+import { DefaultEncryptionProvider } from '@pixpilot/chrome-storage/default-encryption-provider';
+import { deriveKeyFromPassword } from '@pixpilot/chrome-storage/secure-storage';
 
 // First time: Derive key from user password
 const { key, salt } = await deriveKeyFromPassword('user-password');
@@ -213,7 +213,7 @@ import {
   hasEncrypted,
   removeEncrypted,
   storeEncrypted,
-} from '@pixpilot/chrome-storage-plus/secure-storage';
+} from '@pixpilot/chrome-storage/secure-storage';
 
 // Derive key from password
 const { key, salt } = await deriveKeyFromPassword('user-password');
@@ -235,8 +235,8 @@ await removeEncrypted('myKey');
 ### Custom Encryption Provider
 
 ```typescript
-import type { EncryptionProvider } from '@pixpilot/chrome-storage-plus';
-import { ChromeStoragePlus } from '@pixpilot/chrome-storage-plus';
+import type { EncryptionProvider } from '@pixpilot/chrome-storage';
+import { ChromeStoragePlus } from '@pixpilot/chrome-storage';
 
 // Implement custom encryption logic
 class CustomEncryption implements EncryptionProvider {

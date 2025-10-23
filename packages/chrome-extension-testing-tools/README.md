@@ -1,4 +1,4 @@
-# chrome-extension-testing-tools
+# @pixpilot/chrome-testing-tools
 
 A package providing mocks for Chrome extension APIs to facilitate testing with Vitest.
 
@@ -7,7 +7,7 @@ A package providing mocks for Chrome extension APIs to facilitate testing with V
 Import the mocks in your test setup:
 
 ```typescript
-import 'chrome-extension-testing-tools';
+import '@pixpilot/chrome-testing-tools';
 ```
 
 This will set up global mocks for `chrome` and `browser` APIs.
@@ -17,7 +17,7 @@ This will set up global mocks for `chrome` and `browser` APIs.
 You can also import the mock objects directly for more control:
 
 ```typescript
-import { mockBrowser, mockChrome } from 'chrome-extension-testing-tools';
+import { mockBrowser, mockChrome } from '@pixpilot/chrome-testing-tools';
 
 describe('my extension', () => {
   beforeEach(() => {
