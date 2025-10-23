@@ -2,7 +2,7 @@
   "name": "chrome-extension",
   "displayName": "Chrome Extension",
   "type": "module",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "private": true,
   "description": "Modern Chrome extension template with Vite, React, TypeScript, and Tailwind CSS",
   "author": "ccpu",
