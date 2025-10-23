@@ -1,7 +1,7 @@
 {
   "name": "chrome-extension-toolkit",
   "private": true,
-  "packageManager": "pnpm@10.18.0",
+  "packageManager": "pnpm@10.19.0",
   "description": "A production-ready Chrome extension monorepo template with TypeScript, Vite, Turborepo, and modern tooling for fast development.",
   "author": "ccpu <m.doaie@hotmail.com>",
   "homepage": "https://github.com/pixpilot/chrome-extension-toolkit",
@@ -61,7 +61,7 @@
     "@vitest/ui": "catalog:dev",
     "eslint": "catalog:dev",
     "husky": "^9.1.7",
-    "lint-staged": "^16.2.5",
+    "lint-staged": "^16.2.6",
     "prettier": "catalog:dev",
     "prettier-plugin-tailwindcss": "catalog:dev",
     "tsx": "^4.20.6",
