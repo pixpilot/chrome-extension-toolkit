@@ -1,5 +1,16 @@
 # chrome-extension-testing-tools
 
+## 0.2.0
+
+### Minor Changes
+
+- add release workflow for package publishing
+- add initial configuration and setup
+
+### Patch Changes
+
+- af43606: new release
+
 ## 0.1.1
 
 ### Patch Changes
