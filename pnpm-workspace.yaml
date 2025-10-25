@@ -33,6 +33,6 @@ catalogs:
     tsdown: ^0.15.9
 
   prod:
-    react: 19.1.1
+    react: 19.2.0
     react-dom: 19.1.1
     zod: 4.0.17
