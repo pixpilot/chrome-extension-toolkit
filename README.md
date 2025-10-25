@@ -16,6 +16,7 @@ A powerful and type-safe Chrome Storage API wrapper with optional built-in encry
 
 Testing utilities and helpers for Chrome extension development.
 
+
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for details.
