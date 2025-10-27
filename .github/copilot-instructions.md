@@ -1,8 +1,7 @@
 # Copilot Instructions
 
-## Build Process
-
-- Do not attempt to build the project when finishing tasks, as the dev server is already running in development mode and will automatically handle compilation.
+- Only use pnpm for installing or managing dependencies in this project. Do not use npm, yarn, or any other package manager.
+- This is a monorepo powered by Turbo and pnpm.
 
 ## Commenting
 
@@ -11,14 +10,6 @@
 ## Testing
 
 This project uses Vitest for testing.
-
-## Styling
-
-- Use Tailwind CSS for styling.
-
-## for messaging
-
-- Use createMessage to create message and always place them in the messages folder.
 
 # File Naming Conventions
 
@@ -29,4 +20,4 @@ This project uses Vitest for testing.
 - **Frontend UI Components (React/Vue only):** Use PascalCase for component files (e.g., `MyButton.tsx`).
   - Example: `MyButton.tsx`, `UserProfile.vue`
 - **Config files:** Use kebab-case unless the framework or library has a different standard—follow the convention for that tool.
-  - Example: `tsconfig.json`, `rollup.config.js`
+  - Example: `tsconfig.json`

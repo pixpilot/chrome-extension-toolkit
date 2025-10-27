@@ -3,7 +3,7 @@
   "private": true,
   "packageManager": "pnpm@10.19.0",
   "description": "A production-ready Chrome extension monorepo template with TypeScript, Vite, Turborepo, and modern tooling for fast development.",
-  "author": "ccpu <m.doaie@hotmail.com>",
+  "author": "m.doaie <m.doaie@hotmail.com>",
   "license": "MIT",
   "homepage": "https://github.com/pixpilot/chrome-extension-toolkit",
   "repository": {
