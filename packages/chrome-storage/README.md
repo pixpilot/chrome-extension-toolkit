@@ -191,20 +191,6 @@ const storage = new ChromeStorage({
 await storage.set('setting', 'value');
 ```
 
-### Convenience API
-
-```typescript
-import { ChromeStorage, createStorageAPI } from '@pixpilot/chrome-storage';
-
-const manager = new ChromeStorage();
-const storage = createStorageAPI(manager);
-
-// Cleaner API without manager reference
-await storage.set('key', 'value');
-const value = await storage.get('key');
-await storage.remove('key');
-```
-
 ### Watching for Changes
 
 Listen to changes for specific storage keys using the `watch` method:

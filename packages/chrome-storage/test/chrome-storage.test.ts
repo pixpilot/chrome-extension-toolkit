@@ -2,7 +2,7 @@ import type { EncryptionProvider } from '../src/chrome-storage';
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { ChromeStorage, createStorageAPI } from '../src/chrome-storage';
+import { ChromeStorage } from '../src/chrome-storage';
 
 // Mock encryption provider
 function createMockEncryptionProvider(): EncryptionProvider {
