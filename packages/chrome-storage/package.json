@@ -1,7 +1,7 @@
 {
   "name": "@pixpilot/chrome-storage",
   "type": "module",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "packageManager": "pnpm@10.19.0",
   "description": "A powerful and type-safe Chrome Storage API wrapper with optional built-in encryption support for Chrome extensions.",
   "author": "ccpu",
