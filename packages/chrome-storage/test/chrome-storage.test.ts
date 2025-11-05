@@ -22,6 +22,11 @@ function createMockChromeStorage() {
     lastError: undefined as { message: string } | undefined,
   };
 
+  const onChangedListeners: ((
+    changes: Record<string, chrome.storage.StorageChange>,
+    areaName: string,
+  ) => void)[] = [];
+
   const mockObj = {
     storage: {
       local: {
@@ -133,7 +138,32 @@ function createMockChromeStorage() {
     storageData,
   };
 
-  return mockObj;
+  // Add onChanged mock
+  (
+    mockObj.storage as unknown as { onChanged: chrome.storage.StorageChangedEvent }
+  ).onChanged = {
+    addListener: vi.fn((callback) => {
+      onChangedListeners.push(callback);
+    }),
+    removeListener: vi.fn((callback) => {
+      const index = onChangedListeners.indexOf(callback);
+      if (index > -1) {
+        onChangedListeners.splice(index, 1);
+      }
+    }),
+    hasListener: vi.fn((callback) => onChangedListeners.includes(callback)),
+  } as unknown as chrome.storage.StorageChangedEvent;
+
+  return {
+    ...mockObj,
+    // Expose onChangedListeners for testing
+    triggerStorageChange: (
+      changes: Record<string, chrome.storage.StorageChange>,
+      areaName: string,
+    ) => {
+      onChangedListeners.forEach((listener) => listener(changes, areaName));
+    },
+  };
 }
 
 describe('chromeStorage', () => {
@@ -258,23 +288,6 @@ describe('chromeStorage', () => {
 
       await manager.has('secretKey', { encrypted: true });
       expect(mockProvider.has).toHaveBeenCalledWith('secretKey');
-    });
-  });
-
-  describe('createStorageAPI', () => {
-    it('should create convenience API', () => {
-      const manager = new ChromeStorage();
-      const api = createStorageAPI(manager);
-
-      expect(api.get).toBeDefined();
-      expect(api.set).toBeDefined();
-      expect(api.remove).toBeDefined();
-      expect(api.has).toBeDefined();
-      expect(api.clear).toBeDefined();
-      expect(api.getAll).toBeDefined();
-      expect(api.getMultiple).toBeDefined();
-      expect(api.setMultiple).toBeDefined();
-      expect(api.getBytesInUse).toBeDefined();
     });
   });
 
@@ -666,6 +679,223 @@ describe('chromeStorage', () => {
 
       await expect(manager.getOnce('key', { encrypted: true })).rejects.toThrow(
         'Encryption provider not configured',
+      );
+    });
+  });
+
+  describe('watch', () => {
+    it('should listen to changes for a specific key', async () => {
+      interface TestSchema {
+        username: string;
+        email: string;
+      }
+
+      const manager = new ChromeStorage<TestSchema>();
+      const callback = vi.fn();
+
+      const unsubscribe = manager.watch('username', callback);
+
+      // Simulate a storage change event
+      mockChrome.triggerStorageChange(
+        {
+          username: { oldValue: 'old', newValue: 'new' },
+        },
+        'local',
+      );
+
+      expect(callback).toHaveBeenCalledTimes(1);
+      expect(callback).toHaveBeenCalledWith(
+        { oldValue: 'old', newValue: 'new' },
+        'username',
+        'local',
+      );
+
+      unsubscribe();
+    });
+
+    it('should not trigger callback for other keys', async () => {
+      interface TestSchema {
+        username: string;
+        email: string;
+      }
+
+      const manager = new ChromeStorage<TestSchema>();
+      const callback = vi.fn();
+
+      manager.watch('username', callback);
+
+      // Simulate a storage change event for a different key
+      mockChrome.triggerStorageChange(
+        {
+          email: { oldValue: 'old@email.com', newValue: 'new@email.com' },
+        },
+        'local',
+      );
+
+      expect(callback).not.toHaveBeenCalled();
+    });
+
+    it('should filter by storage area when specified', async () => {
+      interface TestSchema {
+        username: string;
+      }
+
+      const manager = new ChromeStorage<TestSchema>();
+      const callback = vi.fn();
+
+      manager.watch('username', callback, { area: 'local' });
+
+      // Trigger change in sync storage (should be ignored)
+      mockChrome.triggerStorageChange(
+        {
+          username: { oldValue: 'old', newValue: 'new' },
+        },
+        'sync',
+      );
+
+      expect(callback).not.toHaveBeenCalled();
+
+      // Trigger change in local storage (should be called)
+      mockChrome.triggerStorageChange(
+        {
+          username: { oldValue: 'old', newValue: 'new' },
+        },
+        'local',
+      );
+
+      expect(callback).toHaveBeenCalledTimes(1);
+    });
+
+    it('should support multiple listeners for the same key', async () => {
+      interface TestSchema {
+        username: string;
+      }
+
+      const manager = new ChromeStorage<TestSchema>();
+      const callback1 = vi.fn();
+      const callback2 = vi.fn();
+
+      manager.watch('username', callback1);
+      manager.watch('username', callback2);
+
+      mockChrome.triggerStorageChange(
+        {
+          username: { oldValue: 'old', newValue: 'new' },
+        },
+        'local',
+      );
+
+      expect(callback1).toHaveBeenCalledTimes(1);
+      expect(callback2).toHaveBeenCalledTimes(1);
+    });
+
+    it('should stop listening when unsubscribe is called', async () => {
+      interface TestSchema {
+        username: string;
+      }
+
+      const manager = new ChromeStorage<TestSchema>();
+      const callback = vi.fn();
+
+      const unsubscribe = manager.watch('username', callback);
+
+      // First change - should trigger callback
+      mockChrome.triggerStorageChange(
+        {
+          username: { oldValue: 'old', newValue: 'new' },
+        },
+        'local',
+      );
+
+      expect(callback).toHaveBeenCalledTimes(1);
+
+      // Unsubscribe
+      unsubscribe();
+
+      // Second change - should NOT trigger callback
+      mockChrome.triggerStorageChange(
+        {
+          username: { oldValue: 'new', newValue: 'newer' },
+        },
+        'local',
+      );
+
+      expect(callback).toHaveBeenCalledTimes(1); // Still 1, not 2
+    });
+
+    it('should work with key transformer', async () => {
+      interface TestSchema {
+        username: string;
+      }
+
+      const manager = new ChromeStorage<TestSchema>({
+        keyTransformer: (key) => `myapp_${key}`,
+      });
+      const callback = vi.fn();
+
+      manager.watch('username', callback);
+
+      // Should listen to the transformed key
+      mockChrome.triggerStorageChange(
+        {
+          myapp_username: { oldValue: 'old', newValue: 'new' },
+        },
+        'local',
+      );
+
+      expect(callback).toHaveBeenCalledTimes(1);
+      expect(callback).toHaveBeenCalledWith(
+        { oldValue: 'old', newValue: 'new' },
+        'myapp_username',
+        'local',
+      );
+    });
+
+    it('should handle changes with undefined oldValue (new item)', async () => {
+      interface TestSchema {
+        username: string;
+      }
+
+      const manager = new ChromeStorage<TestSchema>();
+      const callback = vi.fn();
+
+      manager.watch('username', callback);
+
+      mockChrome.triggerStorageChange(
+        {
+          username: { newValue: 'new' },
+        },
+        'local',
+      );
+
+      expect(callback).toHaveBeenCalledWith(
+        { oldValue: undefined, newValue: 'new' },
+        'username',
+        'local',
+      );
+    });
+
+    it('should handle changes with undefined newValue (deleted item)', async () => {
+      interface TestSchema {
+        username: string;
+      }
+
+      const manager = new ChromeStorage<TestSchema>();
+      const callback = vi.fn();
+
+      manager.watch('username', callback);
+
+      mockChrome.triggerStorageChange(
+        {
+          username: { oldValue: 'old' },
+        },
+        'local',
+      );
+
+      expect(callback).toHaveBeenCalledWith(
+        { oldValue: 'old', newValue: undefined },
+        'username',
+        'local',
       );
     });
   });

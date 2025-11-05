@@ -4,6 +4,10 @@
  * Supports both encrypted (secure) and plain storage with configurable encryption
  */
 
+import type { StorageChangeCallback } from './storage-listener';
+
+import { StorageListener } from './storage-listener';
+
 export type StorageArea = 'local' | 'sync';
 
 export interface StorageOptions {
@@ -63,6 +67,7 @@ export interface GenericChromeStorageOptions {
 export class ChromeStorage<TSchema = Record<string, unknown>> {
   private keyTransformer: (key: string) => string;
   private encryptionProvider?: EncryptionProvider;
+  private storageListener: StorageListener;
 
   constructor(options: GenericChromeStorageOptions = {}) {
     this.keyTransformer = options.keyTransformer ?? ((key: string) => key);
@@ -73,6 +78,9 @@ export class ChromeStorage<TSchema = Record<string, unknown>> {
     if (options.encryptionProvider !== undefined) {
       this.encryptionProvider = options.encryptionProvider ?? undefined;
     }
+
+    // Initialize storage listener
+    this.storageListener = new StorageListener();
   }
 
   /**
@@ -441,90 +449,48 @@ export class ChromeStorage<TSchema = Record<string, unknown>> {
 
     return bytes;
   }
-}
 
-/**
- * Create convenience functions for a storage manager instance
- */
-export function createStorageAPI<TSchema = Record<string, unknown>>(
-  manager: ChromeStorage<TSchema>,
-): {
-  get: <K extends keyof TSchema>(
+  /**
+   * Watch for changes to a specific storage key
+   * Returns an unsubscribe function to stop listening
+   *
+   * @param key - The storage key to watch
+   * @param callback - Function called when the key changes
+   * @param options - Storage options (area filter)
+   * @returns A function to remove the listener
+   *
+   * @example
+   * ```typescript
+   * // Watch for username changes
+   * const unsubscribe = storage.watch('username', (change, key, area) => {
+   *   console.log(`${key} changed from ${change.oldValue} to ${change.newValue}`);
+   *   console.log(`Changed in ${area} storage`);
+   * });
+   *
+   * // Later, stop watching
+   * unsubscribe();
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Watch only local storage changes
+   * const unsubscribe = storage.watch(
+   *   'settings',
+   *   (change) => {
+   *     console.log('Settings updated:', change.newValue);
+   *   },
+   *   { area: 'local' }
+   * );
+   * ```
+   */
+  watch<K extends keyof TSchema>(
     key: K,
-    options?: StorageOptions,
-  ) => Promise<TSchema[K] | undefined>;
-  getMultiple: <K extends keyof TSchema>(
-    keys: readonly K[],
-    options?: StorageOptions,
-  ) => Promise<Partial<Pick<TSchema, K>>>;
-  getAll: (options?: StorageOptions) => Promise<Partial<TSchema>>;
-  set: <K extends keyof TSchema>(
-    key: K,
-    value: TSchema[K],
-    options?: StorageOptions,
-  ) => Promise<void>;
-  setMultiple: <K extends keyof TSchema>(
-    items: Partial<Pick<TSchema, K>>,
-    options?: StorageOptions,
-  ) => Promise<void>;
-  remove: (
-    keys: keyof TSchema | (keyof TSchema)[],
-    options?: StorageOptions,
-  ) => Promise<void>;
-  clear: (options?: StorageOptions) => Promise<void>;
-  has: (key: keyof TSchema | string, options?: StorageOptions) => Promise<boolean>;
-  getBytesInUse: (
-    keys?: keyof TSchema | (keyof TSchema)[],
-    options?: StorageOptions,
-  ) => Promise<number>;
-  getOnce: <K extends keyof TSchema>(
-    key: K,
-    options?: StorageOptions,
-  ) => Promise<TSchema[K] | undefined>;
-} {
-  return {
-    // Get operations
-    get: async <K extends keyof TSchema>(
-      key: K,
-      options?: StorageOptions,
-    ): Promise<TSchema[K] | undefined> => manager.get(key, options),
-    getMultiple: async <K extends keyof TSchema>(
-      keys: readonly K[],
-      options?: StorageOptions,
-    ): Promise<Partial<Pick<TSchema, K>>> => manager.getMultiple(keys, options),
-    getAll: async (options?: StorageOptions): Promise<Partial<TSchema>> =>
-      manager.getAll(options),
+    callback: StorageChangeCallback<TSchema[K]>,
+    options: Pick<StorageOptions, 'area'> = {},
+  ): () => void {
+    const transformedKey = this.keyTransformer(key as string);
+    const { area } = options;
 
-    // Set operations
-    set: async <K extends keyof TSchema>(
-      key: K,
-      value: TSchema[K],
-      options?: StorageOptions,
-    ): Promise<void> => manager.set(key, value, options),
-    setMultiple: async <K extends keyof TSchema>(
-      items: Partial<Pick<TSchema, K>>,
-      options?: StorageOptions,
-    ): Promise<void> => manager.setMultiple(items, options),
-
-    // Remove operations
-    remove: async (
-      keys: keyof TSchema | (keyof TSchema)[],
-      options?: StorageOptions,
-    ): Promise<void> => manager.remove(keys, options),
-    clear: async (options?: StorageOptions): Promise<void> => manager.clear(options),
-
-    // Utility operations
-    has: async (
-      key: keyof TSchema | string,
-      options?: StorageOptions,
-    ): Promise<boolean> => manager.has(key, options),
-    getBytesInUse: async (
-      keys?: keyof TSchema | (keyof TSchema)[],
-      options?: StorageOptions,
-    ): Promise<number> => manager.getBytesInUse(keys, options),
-    getOnce: async <K extends keyof TSchema>(
-      key: K,
-      options?: StorageOptions,
-    ): Promise<TSchema[K] | undefined> => manager.getOnce(key, options),
-  };
+    return this.storageListener.addListener(transformedKey, callback, area);
+  }
 }

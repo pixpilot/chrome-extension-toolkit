@@ -205,6 +205,137 @@ const value = await storage.get('key');
 await storage.remove('key');
 ```
 
+### Watching for Changes
+
+Listen to changes for specific storage keys using the `watch` method:
+
+```typescript
+import { ChromeStorage } from '@pixpilot/chrome-storage';
+
+// Define your storage schema
+interface MyStorage {
+  username: string;
+  settings: { theme: string; notifications: boolean };
+  count: number;
+}
+
+const storage = new ChromeStorage<MyStorage>();
+
+// Watch for changes to a specific key
+const unsubscribe = storage.watch('username', (change, key, area) => {
+  console.log(`${key} changed in ${area} storage`);
+  console.log('Old value:', change.oldValue);
+  console.log('New value:', change.newValue);
+});
+
+// Later, stop watching
+unsubscribe();
+```
+
+#### Watch with Storage Area Filter
+
+```typescript
+// Only listen to changes in local storage
+const unsubscribe = storage.watch(
+  'settings',
+  (change) => {
+    console.log('Settings updated:', change.newValue);
+  },
+  { area: 'local' },
+);
+
+// This will only trigger for local storage changes, not sync storage
+```
+
+#### Multiple Listeners
+
+```typescript
+// You can add multiple listeners for the same key
+const unsubscribe1 = storage.watch('username', (change) => {
+  console.log('Listener 1:', change.newValue);
+});
+
+const unsubscribe2 = storage.watch('username', (change) => {
+  console.log('Listener 2:', change.newValue);
+});
+
+// Both listeners will be called when username changes
+
+// Remove listeners independently
+unsubscribe1();
+// unsubscribe2 still active
+```
+
+#### React Hook Example
+
+```tsx
+import { useEffect, useState } from 'react';
+
+function useStorageValue<T>(
+  storage: ChromeStorage<MyStorage>,
+  key: keyof MyStorage,
+): T | undefined {
+  const [value, setValue] = useState<T | undefined>();
+
+  useEffect(() => {
+    // Get initial value
+    storage.get(key).then((initialValue) => {
+      setValue(initialValue as T | undefined);
+    });
+
+    // Watch for changes
+    const unsubscribe = storage.watch(key, (change) => {
+      setValue(change.newValue as T | undefined);
+    });
+
+    // Cleanup on unmount
+    return () => {
+      unsubscribe();
+    };
+  }, [storage, key]);
+
+  return value;
+}
+
+// Usage
+function MyComponent() {
+  const username = useStorageValue<string>(storage, 'username');
+
+  return <div>Username: {username}</div>;
+}
+```
+
+#### Handling Different Change Types
+
+```typescript
+storage.watch('username', (change, key, area) => {
+  if (change.oldValue === undefined) {
+    console.log('Item created:', change.newValue);
+  } else if (change.newValue === undefined) {
+    console.log('Item deleted:', change.oldValue);
+  } else {
+    console.log('Item updated:', change.oldValue, '->', change.newValue);
+  }
+});
+```
+
+#### Using with Key Transformer
+
+The `watch` method respects the `keyTransformer` option:
+
+```typescript
+const storage = new ChromeStorage({
+  keyTransformer: (key) => `myapp_${key}`,
+});
+
+// Watches for changes to "myapp_username" in storage
+storage.watch('username', (change) => {
+  console.log('Username changed:', change.newValue);
+});
+```
+
+**Note:** The callback receives the transformed key, not the original key.
+
 ## API Reference
 
 ### ChromeStorage Class
@@ -239,6 +370,22 @@ All methods throw errors on failure. Use try-catch for error handling. When usin
 - `clear(options?)` - Clear all items from storage area
 - `has(key: keyof TSchema | string, options?)` - Check if key exists (allows any string for flexibility)
 - `getBytesInUse(keys?: keyof TSchema | (keyof TSchema)[], options?)` - Get storage usage in bytes
+- `watch<K>(key: K, callback: StorageChangeCallback<TSchema[K]>, options?)` - Watch for changes to a specific key. Returns an unsubscribe function. Options can include `area` to filter by storage area ('local' or 'sync').
+
+#### Storage Change Callback
+
+```typescript
+type StorageChangeCallback<T> = (
+  change: StorageChange<T>,
+  key: string,
+  area: 'local' | 'sync',
+) => void;
+
+interface StorageChange<T> {
+  oldValue?: T; // undefined if item was just created
+  newValue?: T; // undefined if item was just deleted
+}
+```
 
 #### Storage Options
 
