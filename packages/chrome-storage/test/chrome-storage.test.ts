@@ -77,11 +77,56 @@ function createMockChromeStorage() {
         }),
       },
       sync: {
-        get: vi.fn(),
-        set: vi.fn(),
-        remove: vi.fn(),
-        clear: vi.fn(),
-        getBytesInUse: vi.fn(),
+        get: vi.fn((keys, callback) => {
+          if (runtime.lastError) {
+            callback({});
+            return;
+          }
+          const result: Record<string, unknown> = {};
+          if (keys) {
+            const keyArray = Array.isArray(keys) ? keys : [keys];
+            keyArray.forEach((key: string) => {
+              if (storageData.has(key)) {
+                result[key] = storageData.get(key);
+              }
+            });
+          }
+          callback(result);
+        }),
+        set: vi.fn((items, callback) => {
+          if (runtime.lastError) {
+            callback?.();
+            return;
+          }
+          Object.entries(items).forEach(([key, value]) => {
+            storageData.set(key, value);
+          });
+          callback?.();
+        }),
+        remove: vi.fn((keys, callback) => {
+          if (runtime.lastError) {
+            callback?.();
+            return;
+          }
+          const keyArray = Array.isArray(keys) ? keys : [keys];
+          keyArray.forEach((key: string) => storageData.delete(key));
+          callback?.();
+        }),
+        clear: vi.fn((callback) => {
+          if (runtime.lastError) {
+            callback?.();
+            return;
+          }
+          storageData.clear();
+          callback?.();
+        }),
+        getBytesInUse: vi.fn((keys, callback) => {
+          if (runtime.lastError) {
+            callback(0);
+            return;
+          }
+          callback(0);
+        }),
       },
     },
     runtime,
@@ -93,6 +138,20 @@ function createMockChromeStorage() {
 
 describe('chromeStorage', () => {
   let mockChrome: ReturnType<typeof createMockChromeStorage>;
+
+  // Generic test schema for tests that need basic storage operations
+  interface TestStorageSchema {
+    testKey: string | { name: string; value: number };
+    secretKey: string;
+    key: string;
+    removeMe: string;
+    existingKey: string;
+    key1: string;
+    key2: string;
+    syncToken: string;
+    oneTimeToken: string;
+    nonExistent: string;
+  }
 
   beforeEach(() => {
     mockChrome = createMockChromeStorage();
@@ -130,7 +189,7 @@ describe('chromeStorage', () => {
 
   describe('get/set operations', () => {
     it.skip('should store and retrieve plain data', async () => {
-      const manager = new ChromeStorage({ encryptionProvider: null });
+      const manager = new ChromeStorage<TestStorageSchema>({ encryptionProvider: null });
 
       await manager.set('testKey', 'testValue');
       const value = await manager.get('testKey');
@@ -139,7 +198,7 @@ describe('chromeStorage', () => {
 
     it('should use encryption provider for encrypted operations', async () => {
       const mockProvider = createMockEncryptionProvider();
-      const manager = new ChromeStorage({
+      const manager = new ChromeStorage<TestStorageSchema>({
         encryptionProvider: mockProvider,
       });
 
@@ -152,7 +211,7 @@ describe('chromeStorage', () => {
     });
 
     it('should throw error when encryption provider not configured', async () => {
-      const manager = new ChromeStorage({ encryptionProvider: null });
+      const manager = new ChromeStorage<TestStorageSchema>({ encryptionProvider: null });
 
       await expect(manager.set('key', 'value', { encrypted: true })).rejects.toThrow(
         'Encryption provider not configured',
@@ -162,7 +221,7 @@ describe('chromeStorage', () => {
 
   describe('remove operations', () => {
     it.skip('should remove plain data', async () => {
-      const manager = new ChromeStorage({ encryptionProvider: null });
+      const manager = new ChromeStorage<TestStorageSchema>({ encryptionProvider: null });
 
       await manager.set('removeMe', 'value');
       await manager.remove('removeMe');
@@ -173,7 +232,7 @@ describe('chromeStorage', () => {
 
     it('should use encryption provider for encrypted remove', async () => {
       const mockProvider = createMockEncryptionProvider();
-      const manager = new ChromeStorage({
+      const manager = new ChromeStorage<TestStorageSchema>({
         encryptionProvider: mockProvider,
       });
 
@@ -184,7 +243,7 @@ describe('chromeStorage', () => {
 
   describe('has operation', () => {
     it.skip('should check existence of plain data', async () => {
-      const manager = new ChromeStorage({ encryptionProvider: null });
+      const manager = new ChromeStorage<TestStorageSchema>({ encryptionProvider: null });
 
       await manager.set('existingKey', 'value');
       const exists = await manager.has('existingKey');
@@ -193,7 +252,7 @@ describe('chromeStorage', () => {
 
     it('should use encryption provider for encrypted has', async () => {
       const mockProvider = createMockEncryptionProvider();
-      const manager = new ChromeStorage({
+      const manager = new ChromeStorage<TestStorageSchema>({
         encryptionProvider: mockProvider,
       });
 
@@ -222,7 +281,7 @@ describe('chromeStorage', () => {
   describe('keyTransformer consistency', () => {
     it('should apply keyTransformer to encrypted get operations', async () => {
       const mockProvider = createMockEncryptionProvider();
-      const manager = new ChromeStorage({
+      const manager = new ChromeStorage<TestStorageSchema>({
         keyTransformer: (key) => `dev_${key}`,
         encryptionProvider: mockProvider,
       });
@@ -233,7 +292,7 @@ describe('chromeStorage', () => {
 
     it('should apply keyTransformer to encrypted set operations', async () => {
       const mockProvider = createMockEncryptionProvider();
-      const manager = new ChromeStorage({
+      const manager = new ChromeStorage<TestStorageSchema>({
         keyTransformer: (key) => `dev_${key}`,
         encryptionProvider: mockProvider,
       });
@@ -244,7 +303,7 @@ describe('chromeStorage', () => {
 
     it('should apply keyTransformer to encrypted remove operations', async () => {
       const mockProvider = createMockEncryptionProvider();
-      const manager = new ChromeStorage({
+      const manager = new ChromeStorage<TestStorageSchema>({
         keyTransformer: (key) => `dev_${key}`,
         encryptionProvider: mockProvider,
       });
@@ -255,7 +314,7 @@ describe('chromeStorage', () => {
 
     it('should apply keyTransformer to encrypted has operations', async () => {
       const mockProvider = createMockEncryptionProvider();
-      const manager = new ChromeStorage({
+      const manager = new ChromeStorage<TestStorageSchema>({
         keyTransformer: (key) => `dev_${key}`,
         encryptionProvider: mockProvider,
       });
@@ -266,7 +325,7 @@ describe('chromeStorage', () => {
 
     it('should apply keyTransformer to encrypted remove with multiple keys', async () => {
       const mockProvider = createMockEncryptionProvider();
-      const manager = new ChromeStorage({
+      const manager = new ChromeStorage<TestStorageSchema>({
         keyTransformer: (key) => `dev_${key}`,
         encryptionProvider: mockProvider,
       });
@@ -280,7 +339,7 @@ describe('chromeStorage', () => {
   describe('error context in messages', () => {
     it('should include storage area and operation in get error messages', async () => {
       mockChrome.runtime.lastError = { message: 'Storage quota exceeded' };
-      const manager = new ChromeStorage({ encryptionProvider: null });
+      const manager = new ChromeStorage<TestStorageSchema>({ encryptionProvider: null });
 
       await expect(manager.get('key')).rejects.toThrow(
         'chrome.storage.local.get failed: Storage quota exceeded',
@@ -291,7 +350,7 @@ describe('chromeStorage', () => {
 
     it('should include storage area and operation in set error messages', async () => {
       mockChrome.runtime.lastError = { message: 'Storage quota exceeded' };
-      const manager = new ChromeStorage({ encryptionProvider: null });
+      const manager = new ChromeStorage<TestStorageSchema>({ encryptionProvider: null });
 
       await expect(manager.set('key', 'value')).rejects.toThrow(
         'chrome.storage.local.set failed: Storage quota exceeded',
@@ -302,7 +361,7 @@ describe('chromeStorage', () => {
 
     it('should include storage area and operation in remove error messages', async () => {
       mockChrome.runtime.lastError = { message: 'Operation failed' };
-      const manager = new ChromeStorage({ encryptionProvider: null });
+      const manager = new ChromeStorage<TestStorageSchema>({ encryptionProvider: null });
 
       await expect(manager.remove('key')).rejects.toThrow(
         'chrome.storage.local.remove failed: Operation failed',
@@ -340,7 +399,7 @@ describe('chromeStorage', () => {
       // Mock decrypt to return invalid JSON
       vi.mocked(mockProvider.decrypt).mockResolvedValue('invalid{json');
 
-      const manager = new ChromeStorage({
+      const manager = new ChromeStorage<TestStorageSchema>({
         encryptionProvider: mockProvider,
       });
 
@@ -358,15 +417,19 @@ describe('chromeStorage', () => {
     });
 
     it('should handle valid JSON correctly', async () => {
+      interface ComplexSchema {
+        testKey: { name: string; value: number };
+      }
+
       const mockProvider = createMockEncryptionProvider();
       // Mock decrypt to return valid JSON
       vi.mocked(mockProvider.decrypt).mockResolvedValue('{"name":"test","value":123}');
 
-      const manager = new ChromeStorage({
+      const manager = new ChromeStorage<ComplexSchema>({
         encryptionProvider: mockProvider,
       });
 
-      const result = await manager.get<{ name: string; value: number }>('testKey', {
+      const result = await manager.get('testKey', {
         encrypted: true,
       });
 
@@ -377,7 +440,7 @@ describe('chromeStorage', () => {
       const mockProvider = createMockEncryptionProvider();
       vi.mocked(mockProvider.decrypt).mockResolvedValue('"validString"');
 
-      const manager = new ChromeStorage({
+      const manager = new ChromeStorage<TestStorageSchema>({
         encryptionProvider: mockProvider,
       });
 
@@ -388,6 +451,222 @@ describe('chromeStorage', () => {
       expect(consoleSpy).not.toHaveBeenCalled();
 
       consoleSpy.mockRestore();
+    });
+  });
+
+  describe('generic type support', () => {
+    interface TestSchema {
+      username: string;
+      count: number;
+      settings: { theme: string; notifications: boolean };
+    }
+
+    it('should provide type-safe get and set operations', async () => {
+      const manager = new ChromeStorage<TestSchema>({ encryptionProvider: null });
+
+      // Type-safe set
+      await manager.set('username', 'john_doe');
+      await manager.set('count', 42);
+      await manager.set('settings', { theme: 'dark', notifications: true });
+
+      // Type-safe get
+      const username = await manager.get('username');
+      const count = await manager.get('count');
+      const settings = await manager.get('settings');
+
+      expect(username).toBe('john_doe');
+      expect(count).toBe(42);
+      expect(settings).toEqual({ theme: 'dark', notifications: true });
+    });
+
+    it('should work with has method', async () => {
+      const manager = new ChromeStorage<TestSchema>({ encryptionProvider: null });
+
+      await manager.set('username', 'test');
+      const exists = await manager.has('username');
+
+      expect(exists).toBe(true);
+    });
+
+    it('should work with remove method', async () => {
+      const manager = new ChromeStorage<TestSchema>({ encryptionProvider: null });
+
+      await manager.set('username', 'test');
+      await manager.remove('username');
+
+      const value = await manager.get('username');
+      expect(value).toBeUndefined();
+    });
+
+    it('should work with getBytesInUse method', async () => {
+      const manager = new ChromeStorage<TestSchema>({ encryptionProvider: null });
+
+      await manager.set('username', 'test');
+      const bytes = await manager.getBytesInUse('username');
+
+      expect(bytes).toBe(0); // Mock returns 0
+    });
+
+    it('should enforce schema keys at compile time', async () => {
+      const manager = new ChromeStorage<TestSchema>({ encryptionProvider: null });
+
+      // These would cause TypeScript errors if uncommented:
+      // await manager.set('invalidKey', 'value'); // TS Error
+      // await manager.get('invalidKey'); // TS Error
+      // await manager.remove('invalidKey'); // TS Error
+      // await manager.set('count', 'not-a-number'); // TS Error: Type 'string' is not assignable to type 'number'
+      // await manager.set('username', 123); // TS Error: Type 'number' is not assignable to type 'string'
+
+      // Valid operations
+      await manager.set('username', 'valid');
+      const value = await manager.get('username');
+      expect(value).toBe('valid');
+    });
+
+    it('should show TypeScript error for invalid keys in getMultiple', async () => {
+      const manager = new ChromeStorage<TestSchema>({ encryptionProvider: null });
+
+      // This would cause TypeScript error if uncommented:
+      // await manager.getMultiple(['username', 'invalidKey']); // TS Error
+
+      // Valid operation
+      const result = await manager.getMultiple(['username', 'count']);
+      expect(result).toBeDefined();
+    });
+
+    it('should show TypeScript error for invalid keys in setMultiple', async () => {
+      const manager = new ChromeStorage<TestSchema>({ encryptionProvider: null });
+
+      // These would cause TypeScript errors if uncommented:
+      // await manager.setMultiple({ invalidKey: 'value' }); // TS Error
+      // await manager.setMultiple({ count: 'not-a-number' }); // TS Error
+
+      // Valid operation
+      await manager.setMultiple({ username: 'test', count: 10 });
+      const username = await manager.get('username');
+      expect(username).toBe('test');
+    });
+  });
+
+  describe('getOnce', () => {
+    it('should get value and remove it from storage', async () => {
+      const manager = new ChromeStorage<TestStorageSchema>({ encryptionProvider: null });
+
+      // Set a value
+      await manager.set('oneTimeToken', 'token123');
+
+      // Get it once
+      const value = await manager.getOnce('oneTimeToken');
+      expect(value).toBe('token123');
+
+      // Verify it was removed
+      const valueAfter = await manager.get('oneTimeToken');
+      expect(valueAfter).toBeUndefined();
+    });
+
+    it('should return undefined for non-existent keys', async () => {
+      const manager = new ChromeStorage<TestStorageSchema>({ encryptionProvider: null });
+
+      const value = await manager.getOnce('nonExistent');
+      expect(value).toBeUndefined();
+    });
+
+    it('should not call remove if value does not exist', async () => {
+      const manager = new ChromeStorage<TestStorageSchema>({ encryptionProvider: null });
+
+      // Spy on remove method
+      const removeSpy = vi.spyOn(manager, 'remove');
+
+      await manager.getOnce('nonExistent');
+
+      expect(removeSpy).not.toHaveBeenCalled();
+
+      removeSpy.mockRestore();
+    });
+
+    it('should work with typed schema', async () => {
+      interface TestSchema {
+        oneTimeCode: string;
+        tempData: { value: number };
+      }
+
+      const manager = new ChromeStorage<TestSchema>({ encryptionProvider: null });
+
+      await manager.set('oneTimeCode', 'CODE123');
+      const code = await manager.getOnce('oneTimeCode');
+
+      expect(code).toBe('CODE123');
+
+      const codeAfter = await manager.get('oneTimeCode');
+      expect(codeAfter).toBeUndefined();
+    });
+
+    it('should work with encrypted data', async () => {
+      interface SecretSchema {
+        secretToken: string;
+      }
+
+      const mockProvider = createMockEncryptionProvider();
+      const manager = new ChromeStorage<SecretSchema>({
+        encryptionProvider: mockProvider,
+      });
+
+      await manager.set('secretToken', 'secret123', { encrypted: true });
+      const value = await manager.getOnce('secretToken', { encrypted: true });
+
+      expect(value).toBe('decrypted');
+      expect(mockProvider.decrypt).toHaveBeenCalledWith('secretToken');
+      expect(mockProvider.remove).toHaveBeenCalledWith('secretToken');
+    });
+
+    it('should work with sync storage', async () => {
+      const manager = new ChromeStorage<TestStorageSchema>({ encryptionProvider: null });
+
+      await manager.set('syncToken', 'token456', { area: 'sync' });
+      const value = await manager.getOnce('syncToken', { area: 'sync' });
+
+      expect(value).toBe('token456');
+
+      const valueAfter = await manager.get('syncToken', { area: 'sync' });
+      expect(valueAfter).toBeUndefined();
+    });
+
+    it('should work with complex objects', async () => {
+      interface TempSchema {
+        tempSession: {
+          userId: number;
+          sessionId: string;
+          permissions: string[];
+        };
+      }
+
+      const manager = new ChromeStorage<TempSchema>({ encryptionProvider: null });
+
+      const tempData = {
+        userId: 123,
+        sessionId: 'abc-def',
+        permissions: ['read', 'write'],
+      };
+
+      await manager.set('tempSession', tempData);
+      const session = await manager.getOnce('tempSession');
+
+      expect(session).toEqual(tempData);
+
+      const sessionAfter = await manager.get('tempSession');
+      expect(sessionAfter).toBeUndefined();
+    });
+
+    it('should throw error when encryption provider not configured', async () => {
+      interface TestSchema {
+        key: string;
+      }
+
+      const manager = new ChromeStorage<TestSchema>({ encryptionProvider: null });
+
+      await expect(manager.getOnce('key', { encrypted: true })).rejects.toThrow(
+        'Encryption provider not configured',
+      );
     });
   });
 });

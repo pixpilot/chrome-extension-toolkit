@@ -47,8 +47,20 @@ export interface GenericChromeStorageOptions {
 /**
  * Generic Chrome Storage Manager
  * All methods throw errors on failure for clean error handling
+ * @template TSchema Optional schema object type for type-safe keys and values
+ * @example
+ * ```typescript
+ * type MyStorage = {
+ *   username: string;
+ *   settings: { theme: string };
+ *   count: number;
+ * };
+ * const storage = new ChromeStorage<MyStorage>();
+ * // Now get('username') returns string | undefined
+ * // and get('invalid') causes a TypeScript error
+ * ```
  */
-export class ChromeStorage {
+export class ChromeStorage<TSchema = Record<string, unknown>> {
   private keyTransformer: (key: string) => string;
   private encryptionProvider?: EncryptionProvider;
 
@@ -67,10 +79,10 @@ export class ChromeStorage {
    * Get a single item from storage
    * @throws Error if operation fails or encryption provider not configured
    */
-  async get<T = unknown>(
-    key: string,
+  async get<K extends keyof TSchema>(
+    key: K,
     options: StorageOptions = {},
-  ): Promise<T | undefined> {
+  ): Promise<TSchema[K] | undefined> {
     const { area = 'local', encrypted = false } = options;
 
     if (encrypted) {
@@ -78,7 +90,7 @@ export class ChromeStorage {
         throw new Error('Encryption provider not configured');
       }
 
-      const transformedKey = this.keyTransformer(key);
+      const transformedKey = this.keyTransformer(key as string);
       const data = await this.encryptionProvider.decrypt(transformedKey);
       if (data === null) {
         return undefined;
@@ -86,15 +98,15 @@ export class ChromeStorage {
 
       // Deserialize the decrypted JSON string back to the original type
       try {
-        return JSON.parse(data) as T;
+        return JSON.parse(data) as TSchema[K];
       } catch (error) {
-        console.warn(`Failed to parse decrypted data for key: ${key}`, error);
+        console.warn(`Failed to parse decrypted data for key: ${String(key)}`, error);
         return undefined;
       }
     }
 
-    const result = await new Promise<StorageGetResult<T>>((resolve, reject) => {
-      chrome.storage[area].get([this.keyTransformer(key)], (storageResult) => {
+    const result = await new Promise<StorageGetResult<TSchema[K]>>((resolve, reject) => {
+      chrome.storage[area].get([this.keyTransformer(key as string)], (storageResult) => {
         if (chrome.runtime.lastError) {
           reject(
             new Error(
@@ -107,17 +119,36 @@ export class ChromeStorage {
       });
     });
 
-    return result[this.keyTransformer(key)];
+    return result[this.keyTransformer(key as string)];
+  }
+
+  /**
+   * Get a single item from storage and immediately remove it
+   * Useful for one-time tokens, temporary data, or message passing
+   * @throws Error if operation fails or encryption provider not configured
+   */
+  async getOnce<K extends keyof TSchema>(
+    key: K,
+    options: StorageOptions = {},
+  ): Promise<TSchema[K] | undefined> {
+    const value = await this.get(key, options);
+
+    // Only remove if value existed
+    if (value !== undefined) {
+      await this.remove(key, options);
+    }
+
+    return value;
   }
 
   /**
    * Get multiple items from storage
    * @throws Error if operation fails
    */
-  async getMultiple<T = unknown>(
-    keys: string[],
+  async getMultiple<K extends keyof TSchema>(
+    keys: readonly K[],
     options: StorageOptions = {},
-  ): Promise<StorageGetResult<T>> {
+  ): Promise<Partial<Pick<TSchema, K>>> {
     const { area = 'local', encrypted = false } = options;
 
     if (encrypted) {
@@ -126,10 +157,10 @@ export class ChromeStorage {
       }
 
       // Handle encrypted keys individually
-      const result: StorageGetResult<T> = {};
+      const result: Partial<Pick<TSchema, K>> = {};
       await Promise.all(
         keys.map(async (key) => {
-          const value = await this.get<T>(key, { encrypted: true });
+          const value = await this.get(key, { encrypted: true });
           if (value !== undefined) {
             result[key] = value;
           }
@@ -138,28 +169,30 @@ export class ChromeStorage {
       return result;
     }
 
-    const transformedKeys = keys.map((key) => this.keyTransformer(key));
-    const result = await new Promise<StorageGetResult<T>>((resolve, reject) => {
-      chrome.storage[area].get(transformedKeys, (storageResult) => {
-        if (chrome.runtime.lastError) {
-          reject(
-            new Error(
-              `chrome.storage.${area}.get failed: ${chrome.runtime.lastError.message}`,
-            ),
-          );
-        } else {
-          resolve(storageResult);
-        }
-      });
-    });
+    const transformedKeys = keys.map((key) => this.keyTransformer(key as string));
+    const storageResult = await new Promise<Record<string, unknown>>(
+      (resolve, reject) => {
+        chrome.storage[area].get(transformedKeys, (result) => {
+          if (chrome.runtime.lastError) {
+            reject(
+              new Error(
+                `chrome.storage.${area}.get failed: ${chrome.runtime.lastError.message}`,
+              ),
+            );
+          } else {
+            resolve(result);
+          }
+        });
+      },
+    );
 
     // Map back to original keys
-    const originalResult: StorageGetResult<T> = {};
+    const originalResult: Partial<Pick<TSchema, K>> = {};
     keys.forEach((key) => {
-      const transformedKey = this.keyTransformer(key);
-      const value = result[transformedKey];
+      const transformedKey = this.keyTransformer(key as string);
+      const value = storageResult[transformedKey];
       if (value !== undefined) {
-        originalResult[key] = value;
+        originalResult[key] = value as TSchema[K];
       }
     });
 
@@ -170,14 +203,14 @@ export class ChromeStorage {
    * Set a single item in storage
    * @throws Error if operation fails
    */
-  async set<T = unknown>(
-    key: string,
-    value: T,
+  async set<K extends keyof TSchema>(
+    key: K,
+    value: TSchema[K],
     options: StorageOptions = {},
   ): Promise<void> {
     const { area = 'local', encrypted = false } = options;
 
-    const transformedKey = this.keyTransformer(key);
+    const transformedKey = this.keyTransformer(key as string);
 
     if (encrypted) {
       if (!this.encryptionProvider) {
@@ -209,8 +242,8 @@ export class ChromeStorage {
    * Set multiple items in storage
    * @throws Error if operation fails
    */
-  async setMultiple<T = unknown>(
-    items: Record<string, T>,
+  async setMultiple<K extends keyof TSchema>(
+    items: Partial<Pick<TSchema, K>>,
     options: StorageOptions = {},
   ): Promise<void> {
     const { area = 'local', encrypted = false } = options;
@@ -223,14 +256,14 @@ export class ChromeStorage {
       // Handle encrypted keys individually
       await Promise.all(
         Object.entries(items).map(async ([key, value]) => {
-          await this.set(key, value, { encrypted: true });
+          await this.set(key as K, value as TSchema[K], { encrypted: true });
         }),
       );
       return;
     }
 
     // Transform the keys in the items object
-    const transformedItems: Record<string, T> = {};
+    const transformedItems: Record<string, unknown> = {};
     Object.entries(items).forEach(([key, value]) => {
       transformedItems[this.keyTransformer(key)] = value;
     });
@@ -254,7 +287,10 @@ export class ChromeStorage {
    * Remove items from storage
    * @throws Error if operation fails
    */
-  async remove(keys: string | string[], options: StorageOptions = {}): Promise<void> {
+  async remove(
+    keys: keyof TSchema | (keyof TSchema)[],
+    options: StorageOptions = {},
+  ): Promise<void> {
     const { area = 'local', encrypted = false } = options;
     const keyArray = Array.isArray(keys) ? keys : [keys];
 
@@ -265,14 +301,14 @@ export class ChromeStorage {
 
       await Promise.all(
         keyArray.map(async (key) => {
-          const transformedKey = this.keyTransformer(key);
+          const transformedKey = this.keyTransformer(key as string);
           await this.encryptionProvider!.remove(transformedKey);
         }),
       );
       return;
     }
 
-    const transformedKeys = keyArray.map((key) => this.keyTransformer(key));
+    const transformedKeys = keyArray.map((key) => this.keyTransformer(key as string));
 
     await new Promise<void>((resolve, reject) => {
       chrome.storage[area].remove(transformedKeys, () => {
@@ -315,30 +351,45 @@ export class ChromeStorage {
    * Check if a key exists in storage
    * @throws Error if operation fails
    */
-  async has(key: string, options: StorageOptions = {}): Promise<boolean> {
-    const { encrypted = false } = options;
+  async has(key: keyof TSchema | string, options: StorageOptions = {}): Promise<boolean> {
+    const { area = 'local', encrypted = false } = options;
 
     if (encrypted) {
       if (!this.encryptionProvider) {
         throw new Error('Encryption provider not configured');
       }
 
-      const transformedKey = this.keyTransformer(key);
+      const transformedKey = this.keyTransformer(key as string);
       return await this.encryptionProvider.has(transformedKey);
     }
 
-    const value = await this.get(key, options);
-    return value !== undefined;
+    // For has, we allow any string key, so we need to check chrome.storage directly
+    const transformedKey = this.keyTransformer(key as string);
+    const result = await new Promise<Record<string, unknown>>((resolve, reject) => {
+      chrome.storage[area].get([transformedKey], (storageResult) => {
+        if (chrome.runtime.lastError) {
+          reject(
+            new Error(
+              `chrome.storage.${area}.get failed: ${chrome.runtime.lastError.message}`,
+            ),
+          );
+        } else {
+          resolve(storageResult);
+        }
+      });
+    });
+
+    return result[transformedKey] !== undefined;
   }
 
   /**
    * Get all items from storage area
    * @throws Error if operation fails
    */
-  async getAll<T = unknown>(options: StorageOptions = {}): Promise<StorageGetResult<T>> {
+  async getAll(options: StorageOptions = {}): Promise<Partial<TSchema>> {
     const { area = 'local' } = options;
 
-    const result = await new Promise<StorageGetResult<T>>((resolve, reject) => {
+    const result = await new Promise<Record<string, unknown>>((resolve, reject) => {
       chrome.storage[area].get(null, (storageResult) => {
         if (chrome.runtime.lastError) {
           reject(
@@ -352,7 +403,7 @@ export class ChromeStorage {
       });
     });
 
-    return result;
+    return result as Partial<TSchema>;
   }
 
   /**
@@ -360,7 +411,7 @@ export class ChromeStorage {
    * @throws Error if operation fails
    */
   async getBytesInUse(
-    keys?: string | string[],
+    keys?: keyof TSchema | (keyof TSchema)[],
     options: StorageOptions = {},
   ): Promise<number> {
     const { area = 'local' } = options;
@@ -368,9 +419,9 @@ export class ChromeStorage {
     let transformedKeys: string[] | null = null;
     if (keys !== undefined) {
       if (Array.isArray(keys)) {
-        transformedKeys = keys.map((k) => this.keyTransformer(k));
+        transformedKeys = keys.map((k) => this.keyTransformer(k as string));
       } else {
-        transformedKeys = [this.keyTransformer(keys)];
+        transformedKeys = [this.keyTransformer(keys as string)];
       }
     }
 
@@ -395,58 +446,85 @@ export class ChromeStorage {
 /**
  * Create convenience functions for a storage manager instance
  */
-export function createStorageAPI(manager: ChromeStorage): {
-  get: <T = unknown>(key: string, options?: StorageOptions) => Promise<T | undefined>;
-  getMultiple: <T = unknown>(
-    keys: string[],
+export function createStorageAPI<TSchema = Record<string, unknown>>(
+  manager: ChromeStorage<TSchema>,
+): {
+  get: <K extends keyof TSchema>(
+    key: K,
     options?: StorageOptions,
-  ) => Promise<StorageGetResult<T>>;
-  getAll: <T = unknown>(options?: StorageOptions) => Promise<StorageGetResult<T>>;
-  set: <T = unknown>(key: string, value: T, options?: StorageOptions) => Promise<void>;
-  setMultiple: <T = unknown>(
-    items: Record<string, T>,
+  ) => Promise<TSchema[K] | undefined>;
+  getMultiple: <K extends keyof TSchema>(
+    keys: readonly K[],
+    options?: StorageOptions,
+  ) => Promise<Partial<Pick<TSchema, K>>>;
+  getAll: (options?: StorageOptions) => Promise<Partial<TSchema>>;
+  set: <K extends keyof TSchema>(
+    key: K,
+    value: TSchema[K],
     options?: StorageOptions,
   ) => Promise<void>;
-  remove: (keys: string | string[], options?: StorageOptions) => Promise<void>;
+  setMultiple: <K extends keyof TSchema>(
+    items: Partial<Pick<TSchema, K>>,
+    options?: StorageOptions,
+  ) => Promise<void>;
+  remove: (
+    keys: keyof TSchema | (keyof TSchema)[],
+    options?: StorageOptions,
+  ) => Promise<void>;
   clear: (options?: StorageOptions) => Promise<void>;
-  has: (key: string, options?: StorageOptions) => Promise<boolean>;
-  getBytesInUse: (keys?: string | string[], options?: StorageOptions) => Promise<number>;
+  has: (key: keyof TSchema | string, options?: StorageOptions) => Promise<boolean>;
+  getBytesInUse: (
+    keys?: keyof TSchema | (keyof TSchema)[],
+    options?: StorageOptions,
+  ) => Promise<number>;
+  getOnce: <K extends keyof TSchema>(
+    key: K,
+    options?: StorageOptions,
+  ) => Promise<TSchema[K] | undefined>;
 } {
   return {
     // Get operations
-    get: async <T = unknown>(
-      key: string,
+    get: async <K extends keyof TSchema>(
+      key: K,
       options?: StorageOptions,
-    ): Promise<T | undefined> => manager.get<T>(key, options),
-    getMultiple: async <T = unknown>(
-      keys: string[],
+    ): Promise<TSchema[K] | undefined> => manager.get(key, options),
+    getMultiple: async <K extends keyof TSchema>(
+      keys: readonly K[],
       options?: StorageOptions,
-    ): Promise<StorageGetResult<T>> => manager.getMultiple<T>(keys, options),
-    getAll: async <T = unknown>(options?: StorageOptions): Promise<StorageGetResult<T>> =>
-      manager.getAll<T>(options),
+    ): Promise<Partial<Pick<TSchema, K>>> => manager.getMultiple(keys, options),
+    getAll: async (options?: StorageOptions): Promise<Partial<TSchema>> =>
+      manager.getAll(options),
 
     // Set operations
-    set: async <T = unknown>(
-      key: string,
-      value: T,
+    set: async <K extends keyof TSchema>(
+      key: K,
+      value: TSchema[K],
       options?: StorageOptions,
     ): Promise<void> => manager.set(key, value, options),
-    setMultiple: async <T = unknown>(
-      items: Record<string, T>,
+    setMultiple: async <K extends keyof TSchema>(
+      items: Partial<Pick<TSchema, K>>,
       options?: StorageOptions,
     ): Promise<void> => manager.setMultiple(items, options),
 
     // Remove operations
-    remove: async (keys: string | string[], options?: StorageOptions): Promise<void> =>
-      manager.remove(keys, options),
+    remove: async (
+      keys: keyof TSchema | (keyof TSchema)[],
+      options?: StorageOptions,
+    ): Promise<void> => manager.remove(keys, options),
     clear: async (options?: StorageOptions): Promise<void> => manager.clear(options),
 
     // Utility operations
-    has: async (key: string, options?: StorageOptions): Promise<boolean> =>
-      manager.has(key, options),
+    has: async (
+      key: keyof TSchema | string,
+      options?: StorageOptions,
+    ): Promise<boolean> => manager.has(key, options),
     getBytesInUse: async (
-      keys?: string | string[],
+      keys?: keyof TSchema | (keyof TSchema)[],
       options?: StorageOptions,
     ): Promise<number> => manager.getBytesInUse(keys, options),
+    getOnce: async <K extends keyof TSchema>(
+      key: K,
+      options?: StorageOptions,
+    ): Promise<TSchema[K] | undefined> => manager.getOnce(key, options),
   };
 }

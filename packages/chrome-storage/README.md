@@ -66,6 +66,96 @@ console.log(all);
 await storage.clear();
 ```
 
+### Type-Safe Storage Schema
+
+Define a schema for **fully type-safe** keys and values - TypeScript will prevent you from using invalid keys:
+
+```typescript
+import { ChromeStorage } from '@pixpilot/chrome-storage';
+
+// Define your storage schema (use type or interface)
+interface MyStorageSchema {
+  username: string;
+  userAge: number;
+  settings: { theme: string; notifications: boolean };
+}
+
+// Or use a type
+interface MyStorageSchema {
+  username: string;
+  userAge: number;
+  settings: { theme: string; notifications: boolean };
+}
+
+// Create storage with schema
+const storage = new ChromeStorage<MyStorageSchema>();
+
+// Now your keys and values are fully type-safe!
+await storage.set('username', 'john_doe'); // ✓ Valid
+await storage.set('userAge', 25); // ✓ Valid
+await storage.set('username', 123); // ✗ TypeScript error: Type 'number' is not assignable to type 'string'
+
+// Invalid keys are caught at compile time
+await storage.set('invalidKey', 'value'); // ✗ TypeScript error: Argument of type '"invalidKey"' is not assignable
+await storage.set('userAge', 'not-a-number'); // ✗ TypeScript error: Type 'string' is not assignable to type 'number'
+
+// Type-safe retrieval with auto-complete
+const username = await storage.get('username'); // Type: string | undefined
+const age = await storage.get('userAge'); // Type: number | undefined
+const settings = await storage.get('settings'); // Type: { theme: string; notifications: boolean } | undefined
+
+// All methods enforce schema keys
+await storage.remove('username'); // ✓ Valid
+await storage.remove('invalidKey'); // ✗ TypeScript error
+
+// getMultiple returns correctly typed partial object
+const data = await storage.getMultiple(['username', 'userAge']);
+// Type: Partial<Pick<MyStorageSchema, 'username' | 'userAge'>>
+// data.username is string | undefined
+// data.userAge is number | undefined
+
+// getAll returns all schema keys
+const all = await storage.getAll();
+// Type: Partial<MyStorageSchema>
+```
+
+### One-Time Data (getOnce)
+
+Get data and immediately remove it - useful for temporary tokens, one-time codes, or message passing:
+
+```typescript
+// Without schema - allows any string key
+const storage = new ChromeStorage();
+
+// Store one-time token
+await storage.set('oneTimeToken', 'abc123');
+
+// Get and remove in one operation
+const token = await storage.getOnce('oneTimeToken');
+console.log(token); // 'abc123'
+
+// Token is now removed
+const tokenAfter = await storage.get('oneTimeToken');
+console.log(tokenAfter); // undefined
+
+// With type-safe schema
+interface MyStorage {
+  oneTimeCode: string;
+  tempSession: { userId: number; expires: number };
+}
+
+const typedStorage = new ChromeStorage<MyStorage>();
+await typedStorage.set('oneTimeCode', 'CODE123');
+const code = await typedStorage.getOnce('oneTimeCode'); // Type: string | undefined
+// typedStorage.getOnce('invalidKey'); // ✗ TypeScript error
+
+// Works with complex data
+const session = { userId: 123, expires: Date.now() + 3600000 };
+await typedStorage.set('tempSession', session);
+const retrievedSession = await typedStorage.getOnce('tempSession');
+// Type: { userId: number; expires: number } | undefined
+```
+
 ### Error Handling
 
 All methods throw errors on failure - use try-catch for error handling:
@@ -123,8 +213,12 @@ await storage.remove('key');
 
 ```typescript
 // Constructor signature
-// new ChromeStorage(options?: GenericChromeStorageOptions)
+// new ChromeStorage<TSchema>(options?: GenericChromeStorageOptions)
 ```
+
+Generic Parameters:
+
+- `TSchema?` - Optional schema type (interface or type) for **fully type-safe** keys and values. When provided, only keys from the schema are allowed (compile-time enforcement). Do not use `extends Record<string, unknown>` as it defeats the type safety.
 
 Options:
 
@@ -133,17 +227,18 @@ Options:
 
 #### Methods
 
-All methods throw errors on failure. Use try-catch for error handling.
+All methods throw errors on failure. Use try-catch for error handling. When using a schema, all methods enforce type-safe keys at compile time.
 
-- `get<T>(key: string, options?)` - Get a single item (returns T | undefined)
-- `getMultiple<T>(keys: string[], options?)` - Get multiple items
-- `getAll<T>(options?)` - Get all items from storage
-- `set<T>(key: string, value: T, options?)` - Set a single item
-- `setMultiple<T>(items: Record<string, T>, options?)` - Set multiple items
-- `remove(keys: string | string[], options?)` - Remove item(s)
+- `get<K>(key: K, options?)` - Get a single item. Returns `TSchema[K] | undefined`. Key must be from schema.
+- `getOnce<K>(key: K, options?)` - Get and remove a single item. Returns `TSchema[K] | undefined`. Key must be from schema.
+- `getMultiple<K>(keys: K[], options?)` - Get multiple items. Returns `Partial<Pick<TSchema, K>>`. Keys must be from schema.
+- `getAll(options?)` - Get all items from storage. Returns `Partial<TSchema>`.
+- `set<K>(key: K, value: TSchema[K], options?)` - Set a single item. Key and value type must match schema.
+- `setMultiple<K>(items: Partial<Pick<TSchema, K>>, options?)` - Set multiple items. Keys and values must match schema.
+- `remove(keys: keyof TSchema | (keyof TSchema)[], options?)` - Remove item(s). Keys must be from schema.
 - `clear(options?)` - Clear all items from storage area
-- `has(key: string, options?)` - Check if key exists (returns boolean)
-- `getBytesInUse(keys?, options?)` - Get storage usage in bytes (returns number)
+- `has(key: keyof TSchema | string, options?)` - Check if key exists (allows any string for flexibility)
+- `getBytesInUse(keys?: keyof TSchema | (keyof TSchema)[], options?)` - Get storage usage in bytes
 
 #### Storage Options
 
