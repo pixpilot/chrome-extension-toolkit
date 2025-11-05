@@ -1,5 +1,15 @@
 # @pixpilot/chrome-storage
 
+## 1.0.0
+
+### Major Changes
+
+- remove Convenience API section
+
+### Minor Changes
+
+- add storage change listener functionality
+
 ## 0.4.0
 
 ### Minor Changes
