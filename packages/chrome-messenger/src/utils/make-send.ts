@@ -1,4 +1,5 @@
 import type { SendOptions } from '../types';
+import { categorizeRuntimeError, createDetailedErrorMessage } from './error-handler';
 import { getBrowserEnv } from './get-browser-env';
 
 /**
@@ -27,24 +28,43 @@ export function makeSend(identifier: string) {
       const browserEnv = getBrowserEnv();
 
       if (!browserEnv) {
-        reject(new Error('browserEnv environment is not defined'));
+        reject(new Error('[chrome-messenger] browserEnv environment is not defined'));
         return;
       }
 
       if (browserEnv.runtime == null) {
-        reject(new Error('browserEnv.runtime is not defined'));
+        reject(new Error('[chrome-messenger] browserEnv.runtime is not defined'));
         return;
       }
 
       const message = { identifier, data, options };
       const responseCallback = (response: unknown) => {
         if (browserEnv.runtime.lastError) {
-          return reject(browserEnv.runtime.lastError);
+          const chromeError = categorizeRuntimeError(
+            browserEnv.runtime.lastError.message || '',
+          );
+          const detailedMessage = createDetailedErrorMessage(
+            identifier,
+            chromeError,
+            browserEnv.runtime.lastError.message || 'Unknown error',
+            options,
+          );
+          return reject(new Error(detailedMessage));
         }
 
-        // Check if response is an error object
+        // Check if response is an error object (intentionally thrown by application)
         if (isErrorResponse(response)) {
-          return reject(new Error(response.error));
+          const detailedMessage = createDetailedErrorMessage(
+            identifier,
+            {
+              code: 'APPLICATION_ERROR',
+              reason: 'Handler threw an error',
+              solution: 'Fix the error in your message handler',
+            },
+            response.error,
+            options,
+          );
+          return reject(new Error(detailedMessage));
         }
 
         resolve(response as ReturnValue);
@@ -54,7 +74,11 @@ export function makeSend(identifier: string) {
       // Send to specific tab
       if (options?.tabId != null) {
         if (typeof browserEnv.tabs === 'undefined' || browserEnv.tabs === null) {
-          reject(new Error('browserEnv.tabs is not defined'));
+          reject(
+            new Error(
+              `[chrome-messenger] Failed to send to tab ${options?.tabId}: browserEnv.tabs is not defined`,
+            ),
+          );
           return;
         }
         browserEnv.tabs.sendMessage(options.tabId, message, responseCallback);

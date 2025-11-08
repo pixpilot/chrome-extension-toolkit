@@ -171,9 +171,10 @@ describe('chrome-messenger', () => {
         callback(null);
       });
 
-      await expect(send({ test: 'data' }, { tabId: TEST_TAB_ID })).rejects.toEqual(
-        new Error('Tab error'),
-      );
+      const promise = send({ test: 'data' }, { tabId: TEST_TAB_ID });
+      await expect(promise).rejects.toThrow('[chrome-messenger]');
+      await expect(promise).rejects.toThrow('test');
+      await expect(promise).rejects.toThrow('tab 123');
     });
   });
 
