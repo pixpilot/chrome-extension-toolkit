@@ -111,5 +111,5 @@ export function createDetailedErrorMessage(
     `Original: ${originalErrorMessage}`,
   ];
 
-  return parts.join(' | ');
+  return parts.join('\n');
 }
