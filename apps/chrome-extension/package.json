@@ -48,7 +48,7 @@
     "react-dom": "catalog:prod"
   },
   "devDependencies": {
-    "@crxjs/vite-plugin": "^2.2.0",
+    "@crxjs/vite-plugin": "^2.2.1",
     "@internal/eslint-config": "workspace:*",
     "@internal/prettier-config": "workspace:*",
     "@internal/tsconfig": "workspace:*",
