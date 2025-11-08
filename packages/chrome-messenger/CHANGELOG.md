@@ -1,5 +1,11 @@
 # @pixpilot/chrome-messenger
 
+## 0.5.0
+
+### Minor Changes
+
+- implement error categorization and detailed messaging
+
 ## 0.4.0
 
 ### Minor Changes
