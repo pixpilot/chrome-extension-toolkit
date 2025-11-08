@@ -1,5 +1,11 @@
 # @pixpilot/chrome-messenger
 
+## 0.5.1
+
+### Patch Changes
+
+- change error message formatting to use new line
+
 ## 0.5.0
 
 ### Minor Changes

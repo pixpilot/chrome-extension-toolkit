@@ -1,7 +1,7 @@
 {
   "name": "@pixpilot/chrome-messenger",
   "type": "module",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "packageManager": "pnpm@10.19.0",
   "description": "A type-safe messaging library for Chrome extensions with React hooks support.",
   "author": "",
