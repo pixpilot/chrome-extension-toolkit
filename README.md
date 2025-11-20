@@ -16,6 +16,10 @@ A powerful and type-safe Chrome Storage API wrapper with optional built-in encry
 
 Testing utilities and helpers for Chrome extension development.
 
+### [chrome-utils](./packages/chrome-utils/README.md)
+
+A set of utility functions for Chrome extensions.
+
 
 ## Contributing
 
