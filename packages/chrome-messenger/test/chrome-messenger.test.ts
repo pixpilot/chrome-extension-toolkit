@@ -799,9 +799,7 @@ describe('chrome-messenger', () => {
         callback({ error: 'Something went wrong' });
       });
 
-      await expect(send({ test: 'data' })).rejects.toEqual({
-        error: 'Something went wrong',
-      });
+      await expect(send({ test: 'data' })).rejects.toThrow('Something went wrong');
     });
 
     it('should return normal response when no error', async () => {
@@ -826,9 +824,9 @@ describe('chrome-messenger', () => {
         },
       );
 
-      await expect(send('ext-123', { test: 'data' })).rejects.toEqual({
-        error: 'External error occurred',
-      });
+      await expect(send('ext-123', { test: 'data' })).rejects.toThrow(
+        'External error occurred',
+      );
     });
 
     it('should handle error response with tab messages', async () => {
@@ -840,9 +838,9 @@ describe('chrome-messenger', () => {
         callback({ error: 'Tab communication failed' });
       });
 
-      await expect(send({ test: 'data' }, { tabId: 123 })).rejects.toEqual({
-        error: 'Tab communication failed',
-      });
+      await expect(send({ test: 'data' }, { tabId: 123 })).rejects.toThrow(
+        'Tab communication failed',
+      );
     });
 
     it('should not throw when response is null or undefined', async () => {
@@ -906,8 +904,8 @@ describe('chrome-messenger', () => {
         return true;
       });
 
-      // This should reject with the error response object
-      await expect(send({ test: 'data' })).rejects.toEqual({ error: 'Handler error' });
+      // This should throw an Error with the error message
+      await expect(send({ test: 'data' })).rejects.toThrow('Handler error');
 
       // Clean up
       consoleError.mockRestore();

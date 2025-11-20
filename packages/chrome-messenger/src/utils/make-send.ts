@@ -3,9 +3,18 @@ import { categorizeRuntimeError, createDetailedErrorMessage } from './error-hand
 import { getBrowserEnv } from './get-browser-env';
 
 /**
+ * Extended error response with type information
+ */
+interface ErrorResponse {
+  error: string;
+  errorType?: string;
+  errorData?: Record<string, unknown>;
+}
+
+/**
  * Type guard to check if response is an error response
  */
-function isErrorResponse(response: unknown): response is { error: string } {
+function isErrorResponse(response: unknown): response is ErrorResponse {
   return (
     response !== null &&
     typeof response === 'object' &&
@@ -54,7 +63,19 @@ export function makeSend(identifier: string) {
 
         // Check if response is an error object (intentionally thrown by application)
         if (isErrorResponse(response)) {
-          return reject(response);
+          const error = new Error(response.error);
+
+          // Restore error type name (standard Error property)
+          if (response.errorType) {
+            error.name = response.errorType;
+          }
+
+          // Restore custom properties from errorData
+          if (response.errorData) {
+            Object.assign(error, response.errorData);
+          }
+
+          return reject(error);
         }
 
         resolve(response as ReturnValue);

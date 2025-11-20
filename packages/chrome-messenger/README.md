@@ -69,16 +69,60 @@ onSignIn(async ({ email, password }) => {
   return { userId: result.user.id };
 });
 
-// Sender receives the error
+// Sender receives the error as an Error object
 try {
   const user = await signIn({ email, password });
   console.log('Signed in:', user);
 } catch (error) {
-  console.error('Sign in failed:', error); // { error: 'Invalid credentials' }
+  console.error('Sign in failed:', error.message); // 'Invalid credentials'
+  // error is a proper Error instance
 }
 ```
 
 > **Note:** Application errors (thrown by your handlers) are NOT logged to the console by the library. Only Chrome runtime errors (connection issues, context invalidated, etc.) are logged for debugging purposes.
+
+### Custom Errors
+
+Custom error classes are supported with preserved error names and custom properties:
+
+```typescript
+class ValidationError extends Error {
+  constructor(
+    message: string,
+    public field: string,
+    public code: string,
+  ) {
+    super(message);
+    this.name = 'ValidationError';
+  }
+}
+
+const { send: validateUser, onMessage: onValidateUser } = createMessage<
+  { email: string },
+  { valid: boolean }
+>('validate-user');
+
+// Handler throws custom error
+onValidateUser(({ email }) => {
+  if (!email.includes('@')) {
+    throw new ValidationError('Invalid email format', 'email', 'INVALID_FORMAT');
+  }
+  return { valid: true };
+});
+
+// Sender receives error with preserved name and custom properties
+try {
+  await validateUser({ email: 'invalid' });
+} catch (error) {
+  if (error.name === 'ValidationError') {
+    console.error(`Validation failed on field: ${error.field}`);
+    console.error(`Error code: ${error.code}`);
+    console.error(`Message: ${error.message}`);
+  }
+}
+```
+
+> **Important:** Due to Chrome's message passing limitations, `instanceof` checks don't work across message boundaries. Use `error.name` to identify error types instead.
 
 ### Chrome Runtime Errors
 

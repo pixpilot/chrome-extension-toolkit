@@ -29,5 +29,33 @@ export function processHandlerError(
     console.error(`Error in message handler for ${identifier}:`, error);
   }
 
-  nativeSendResponse({ error: errorMessage });
+  // Build error response with type information
+  const errorResponse: {
+    error: string;
+    errorType?: string;
+    errorData?: Record<string, unknown>;
+  } = { error: errorMessage };
+
+  // Preserve error type name (e.g., 'ValidationError', 'CustomError')
+  if (error && typeof error === 'object' && 'name' in error && error.name !== 'Error') {
+    errorResponse.errorType = error.name as string;
+  }
+
+  // Extract custom properties from the error (excluding standard Error properties)
+  if (error && typeof error === 'object') {
+    const standardProps = ['name', 'message', 'stack'];
+    const customProps: Record<string, unknown> = {};
+
+    for (const key of Object.keys(error)) {
+      if (!standardProps.includes(key)) {
+        customProps[key] = (error as any)[key];
+      }
+    }
+
+    if (Object.keys(customProps).length > 0) {
+      errorResponse.errorData = customProps;
+    }
+  }
+
+  nativeSendResponse(errorResponse);
 }
