@@ -13,6 +13,8 @@ import {
   isValidMessage,
   makeSend,
 } from './utils';
+
+import { processHandlerError } from './utils/process-handler-error';
 import MessageSender = chrome.runtime.MessageSender;
 
 function makeMessageListener<Data, ReturnValue>(
@@ -59,8 +61,7 @@ function makeMessageListener<Data, ReturnValue>(
               nativeSendResponse(response);
             })
             .catch((error) => {
-              console.error(`Error in message handler for ${identifier}:`, error);
-              nativeSendResponse({ error: (error as Error).message });
+              processHandlerError(error, identifier, nativeSendResponse);
             });
           return true; // Keep message channel open
         }
@@ -68,8 +69,7 @@ function makeMessageListener<Data, ReturnValue>(
         nativeSendResponse(result);
         return true;
       } catch (error) {
-        console.error(`Error in message handler for ${identifier}:`, error);
-        nativeSendResponse({ error: (error as Error).message });
+        processHandlerError(error, identifier, nativeSendResponse);
         return true;
       }
     }

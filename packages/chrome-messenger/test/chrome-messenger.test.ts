@@ -347,10 +347,8 @@ describe('chrome-messenger', () => {
       await new Promise((resolve) => {
         setTimeout(resolve, TIMEOUT_MEDIUM);
       });
-      expect(consoleError).toHaveBeenCalledWith(
-        'Error in message handler for errorHandler:',
-        new Error('Async error'),
-      );
+      // Application errors should NOT be logged by the library
+      expect(consoleError).not.toHaveBeenCalled();
       expect(sendResponse).toHaveBeenCalledWith({ error: 'Async error' });
 
       consoleError.mockRestore();
@@ -801,7 +799,9 @@ describe('chrome-messenger', () => {
         callback({ error: 'Something went wrong' });
       });
 
-      await expect(send({ test: 'data' })).rejects.toThrow('Something went wrong');
+      await expect(send({ test: 'data' })).rejects.toEqual({
+        error: 'Something went wrong',
+      });
     });
 
     it('should return normal response when no error', async () => {
@@ -826,9 +826,9 @@ describe('chrome-messenger', () => {
         },
       );
 
-      await expect(send('ext-123', { test: 'data' })).rejects.toThrow(
-        'External error occurred',
-      );
+      await expect(send('ext-123', { test: 'data' })).rejects.toEqual({
+        error: 'External error occurred',
+      });
     });
 
     it('should handle error response with tab messages', async () => {
@@ -840,9 +840,9 @@ describe('chrome-messenger', () => {
         callback({ error: 'Tab communication failed' });
       });
 
-      await expect(send({ test: 'data' }, { tabId: 123 })).rejects.toThrow(
-        'Tab communication failed',
-      );
+      await expect(send({ test: 'data' }, { tabId: 123 })).rejects.toEqual({
+        error: 'Tab communication failed',
+      });
     });
 
     it('should not throw when response is null or undefined', async () => {
@@ -906,8 +906,8 @@ describe('chrome-messenger', () => {
         return true;
       });
 
-      // This should throw because the handler throws an error
-      await expect(send({ test: 'data' })).rejects.toThrow('Handler error');
+      // This should reject with the error response object
+      await expect(send({ test: 'data' })).rejects.toEqual({ error: 'Handler error' });
 
       // Clean up
       consoleError.mockRestore();

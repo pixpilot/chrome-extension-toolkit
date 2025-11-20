@@ -54,17 +54,7 @@ export function makeSend(identifier: string) {
 
         // Check if response is an error object (intentionally thrown by application)
         if (isErrorResponse(response)) {
-          const detailedMessage = createDetailedErrorMessage(
-            identifier,
-            {
-              code: 'APPLICATION_ERROR',
-              reason: 'Handler threw an error',
-              solution: 'Fix the error in your message handler',
-            },
-            response.error,
-            options,
-          );
-          return reject(new Error(detailedMessage));
+          return reject(response);
         }
 
         resolve(response as ReturnValue);

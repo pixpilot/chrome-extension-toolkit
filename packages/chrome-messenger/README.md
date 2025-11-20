@@ -50,7 +50,9 @@ onFetchUser(async ({ id }) => await getUserById(id));
 
 ## Error Handling
 
-Errors thrown in message handlers are automatically converted to thrown errors on the sender side:
+### Application Errors
+
+Errors thrown in message handlers are automatically sent to the sender:
 
 ```typescript
 const { send: signIn, onMessage: onSignIn } = createMessage<
@@ -62,19 +64,33 @@ const { send: signIn, onMessage: onSignIn } = createMessage<
 onSignIn(async ({ email, password }) => {
   const result = await authenticateUser(email, password);
   if (!result.success) {
-    throw new Error('Invalid credentials'); // This gets thrown to sender
+    throw new Error('Invalid credentials');
   }
   return { userId: result.user.id };
 });
 
-// Sender catches errors with standard try-catch
+// Sender receives the error
 try {
   const user = await signIn({ email, password });
   console.log('Signed in:', user);
 } catch (error) {
-  console.error('Sign in failed:', error.message); // Works!
+  console.error('Sign in failed:', error); // { error: 'Invalid credentials' }
 }
 ```
+
+> **Note:** Application errors (thrown by your handlers) are NOT logged to the console by the library. Only Chrome runtime errors (connection issues, context invalidated, etc.) are logged for debugging purposes.
+
+### Chrome Runtime Errors
+
+Chrome-specific errors (like "receiving end does not exist" or "extension context invalidated") are automatically detected and logged with helpful context. These errors include:
+
+- **NO_RECEIVER**: No listener registered for the message
+- **TAB_UNAVAILABLE**: Tab is closed or page is restricted
+- **CONTEXT_INVALIDATED**: Extension was reloaded, updated, or disabled
+- **PERMISSION_DENIED**: Missing required permissions
+- **PORT_DISCONNECTED**: Message port was closed before response
+
+These errors will be logged to the console with diagnostic information to help you debug connection issues.
 
 ## React Integration
 
