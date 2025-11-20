@@ -1,7 +1,7 @@
 {
   "name": "@pixpilot/chrome-utils",
   "type": "module",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "packageManager": "pnpm@10.17.0",
   "description": "A set of utility functions for Chrome extensions.",
   "author": "m.doaie <m.doaie@hotmail.com>",
