@@ -1,15 +1,15 @@
 {
-  "name": "@pixpilot/chrome-utils",
+  "name": "@pixpilot/chrome-lifecycle",
   "type": "module",
-  "version": "0.1.0",
+  "version": "0.0.0",
   "packageManager": "pnpm@10.17.0",
-  "description": "A set of utility functions for Chrome extensions.",
+  "description": "Lifecycle management utilities for Chrome extensions.",
   "author": "m.doaie <m.doaie@hotmail.com>",
   "license": "MIT",
   "repository": {
     "type": "git",
     "url": "https://github.com/pixpilot/chrome-extension-toolkit.git",
-    "directory": "packages/chrome-utils"
+    "directory": "packages/chrome-lifecycle"
   },
   "keywords": [],
   "exports": "./src/index.ts",

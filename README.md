@@ -4,6 +4,10 @@ A collection of npm packages for building Chrome extensions.
 
 ## Packages
 
+### [chrome-lifecycle](./packages/chrome-lifecycle/README.md)
+
+Lifecycle management utilities for Chrome extensions.
+
 ### [chrome-messenger](./packages/chrome-messenger/README.md)
 
 A type-safe messaging library for Chrome extensions with React hooks support.
@@ -15,10 +19,6 @@ A powerful and type-safe Chrome Storage API wrapper with optional built-in encry
 ### [chrome-testing-tools](./packages/chrome-testing-tools/README.md)
 
 Testing utilities and helpers for Chrome extension development.
-
-### [chrome-utils](./packages/chrome-utils/README.md)
-
-A set of utility functions for Chrome extensions.
 
 
 ## Contributing

@@ -1,3 +1,3 @@
-# @pixpilot/chrome-utils
+# @pixpilot/chrome-lifecycle
 
 ## Usage Add usage instructions here.
