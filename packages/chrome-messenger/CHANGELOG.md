@@ -1,5 +1,11 @@
 # @pixpilot/chrome-messenger
 
+## 0.6.1
+
+### Patch Changes
+
+- improve error handling in message sending
+
 ## 0.6.0
 
 ### Minor Changes
