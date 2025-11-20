@@ -1,5 +1,11 @@
 # @pixpilot/chrome-messenger
 
+## 0.6.0
+
+### Minor Changes
+
+- implement structured error handling and logging
+
 ## 0.5.1
 
 ### Patch Changes
