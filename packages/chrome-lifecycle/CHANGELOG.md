@@ -1,5 +1,11 @@
 # @pixpilot/chrome-lifecycle
 
+## 0.5.0
+
+### Minor Changes
+
+- remove unused `SidePanelTabTypes` type
+
 ## 0.4.0
 
 ### Minor Changes
