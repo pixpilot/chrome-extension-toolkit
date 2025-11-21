@@ -1,3 +1,10 @@
 {
-  "tailwindCSS.experimental.classRegex": [["className\\s*:\\s*['\"]([^'\"]*)['\"]"]]
+  "tailwindCSS.experimental.classRegex": [
+    [
+      "className\\s*:\\s*['\"]([^'\"]*)['\"]"
+    ]
+  ],
+  "cSpell.words": [
+    "sidepanel"
+  ]
 }
