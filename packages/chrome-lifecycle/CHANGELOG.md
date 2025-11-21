@@ -1,5 +1,15 @@
 # @pixpilot/chrome-lifecycle
 
+## 0.6.0
+
+### Minor Changes
+
+- add dependency and initialize state managers
+
+### Patch Changes
+
+- change error throwing to console logging in ensureInitialized
+
 ## 0.5.0
 
 ### Minor Changes
