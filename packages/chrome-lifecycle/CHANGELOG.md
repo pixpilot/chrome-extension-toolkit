@@ -1,5 +1,11 @@
 # @pixpilot/chrome-lifecycle
 
+## 0.2.0
+
+### Minor Changes
+
+- implement side panel state management
+
 ## 0.1.1
 
 ### Patch Changes
