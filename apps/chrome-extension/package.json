@@ -44,6 +44,7 @@
   "dependencies": {
     "@internal/configs": "workspace:*",
     "@internal/ui": "workspace:*",
+    "@pixpilot/chrome-lifecycle": "workspace:*",
     "react": "catalog:prod",
     "react-dom": "catalog:prod"
   },

@@ -1,3 +1,4 @@
+import { initializeSidePanelStateTracker } from '@pixpilot/chrome-lifecycle';
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { ViewProvider } from '../../components/ViewProvider';
@@ -10,3 +11,5 @@ ReactDOM.createRoot(document.getElementById('app') as HTMLElement).render(
     <SidePanel />
   </ViewProvider>,
 );
+
+initializeSidePanelStateTracker();

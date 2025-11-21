@@ -159,6 +159,9 @@ importers:
       '@internal/ui':
         specifier: workspace:*
         version: link:../../packages/ui
+      '@pixpilot/chrome-lifecycle':
+        specifier: workspace:*
+        version: link:../../packages/chrome-lifecycle
       react:
         specifier: catalog:prod
         version: 19.1.1
@@ -377,36 +380,6 @@ importers:
       rollup:
         specifier: catalog:dev
         version: 4.52.5
-      typescript:
-        specifier: catalog:dev
-        version: 5.9.3
-
-  packages/chrome-utils:
-    devDependencies:
-      '@internal/eslint-config':
-        specifier: workspace:*
-        version: link:../../tooling/eslint
-      '@internal/prettier-config':
-        specifier: workspace:*
-        version: link:../../tooling/prettier
-      '@internal/tsconfig':
-        specifier: workspace:*
-        version: link:../../tooling/typescript
-      '@internal/tsdown-config':
-        specifier: workspace:*
-        version: link:../../tooling/tsdown
-      '@internal/vitest-config':
-        specifier: workspace:*
-        version: link:../../tooling/vitest
-      '@types/node':
-        specifier: catalog:dev
-        version: 22.18.12
-      eslint:
-        specifier: catalog:dev
-        version: 9.38.0(jiti@2.6.1)
-      tsdown:
-        specifier: catalog:dev
-        version: 0.15.9(typescript@5.9.3)
       typescript:
         specifier: catalog:dev
         version: 5.9.3
