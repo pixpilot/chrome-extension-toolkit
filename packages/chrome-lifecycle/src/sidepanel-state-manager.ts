@@ -16,10 +16,20 @@ const listeners = new Set<SidePanelStateListener>();
 
 let isInitialized = false;
 
+/**
+ * Ensures the side panel state manager has been initialized.
+ *
+ * Throws an error if `initSidePanelStateManager()` has not been called.
+ *
+ * ⚠️ Important: Always call `initSidePanelStateManager()` at the top
+ * of your background script before using any other API functions
+ * (getSidePanelStateForWindow, isWindowSidePanelVisible, onSidePanelStateChange, etc.).
+ */
 function ensureInitialized(): void {
   if (!isInitialized) {
     throw new Error(
-      'Side panel state manager must be initialized with initSidePanelStateManager() before use.',
+      'Side panel state manager is not initialized.\n' +
+        'Call initSidePanelStateManager() at the top of your background script before using any other functions.',
     );
   }
 }

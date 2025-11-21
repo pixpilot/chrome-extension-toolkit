@@ -42,45 +42,45 @@ Tracks whether side panels are visible or hidden across different windows.
 
 #### Setup
 
-**Background script (service worker):**
+This feature requires initialization in both your background script and side panel script.
+
+**1. Background script (service worker):**
+
+Call `initSidePanelStateManager()` at the top of your background script, before any other side panel functions. All other functions (`getSidePanelStateForWindow`, `isWindowSidePanelVisible`, `onSidePanelStateChange`) will throw an error if called before initialization.
 
 ```typescript
+// background.ts
 import { initSidePanelStateManager } from '@pixpilot/chrome-lifecycle';
 
-// Initialize once at startup
+// ⚠️ Critical Setup
+// Must be called first, before any other side panel functions
 initSidePanelStateManager();
+
+// Now you can use other functions
 ```
 
-**Side panel script (frontend):**
+**2. Side panel script (frontend):**
+
+Call `initializeSidePanelStateTracker()` when your side panel loads. This sets up visibility tracking and a heartbeat to keep the connection alive.
 
 ```typescript
+// sidepanel.ts
 import { initializeSidePanelStateTracker } from '@pixpilot/chrome-lifecycle';
 
-// Initialize when side panel loads
 const cleanup = initializeSidePanelStateTracker();
+
+// Optional: call cleanup() when done to remove listeners and disconnect
 ```
 
 #### Functions
 
 ##### `initSidePanelStateManager()`
 
-Initializes the backend state manager. Must be called once in your background script before using other side panel functions. Subsequent calls log a warning and are ignored.
-
-```typescript
-import { initSidePanelStateManager } from '@pixpilot/chrome-lifecycle';
-
-initSidePanelStateManager();
-```
+Initializes the backend state manager. **Must be called once at the top of your background script before using any other side panel functions.** Subsequent calls log a warning and are ignored.
 
 ##### `initializeSidePanelStateTracker()`
 
-Initializes the frontend tracker in your side panel. Sets up visibility tracking and heartbeat to keep the connection alive.
-
-```typescript
-import { initializeSidePanelStateTracker } from '@pixpilot/chrome-lifecycle';
-
-const cleanup = initializeSidePanelStateTracker();
-```
+Initializes the frontend tracker in your side panel. Sets up visibility change detection and a heartbeat (every 15 seconds) to maintain the connection.
 
 **Returns:** Cleanup function to remove listeners and disconnect
 
