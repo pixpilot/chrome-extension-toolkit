@@ -17,5 +17,3 @@ export type SidePanelStateChangeData = Omit<SidePanelStateData, 'timestamp' | 't
 export interface SidePanelClientMessage {
   type: 'close-side-panel';
 }
-
-export type SidePanelTabTypes = 'insights' | 'history' | 'settings';
