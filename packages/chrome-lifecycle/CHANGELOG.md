@@ -1,5 +1,11 @@
 # @pixpilot/chrome-lifecycle
 
+## 0.4.0
+
+### Minor Changes
+
+- export `types` module
+
 ## 0.3.0
 
 ### Minor Changes
