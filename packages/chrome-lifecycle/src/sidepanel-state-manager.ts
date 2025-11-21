@@ -27,9 +27,9 @@ let isInitialized = false;
  */
 function ensureInitialized(): void {
   if (!isInitialized) {
-    throw new Error(
-      'Side panel state manager is not initialized.\n' +
-        'Call initSidePanelStateManager() at the top of your background script before using any other functions.',
+    console.error(
+      'Side panel state manager is not initialized.',
+      'Call initSidePanelStateManager() at the top of your background script before using any other functions.',
     );
   }
 }
