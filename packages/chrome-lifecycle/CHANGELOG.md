@@ -1,5 +1,11 @@
 # @pixpilot/chrome-lifecycle
 
+## 0.3.0
+
+### Minor Changes
+
+- export side-panel-state-tracker module
+
 ## 0.2.0
 
 ### Minor Changes
