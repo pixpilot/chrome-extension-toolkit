@@ -60,17 +60,13 @@ describe('sidepanel-state', () => {
   });
 
   describe('getSidePanelStateForWindow', () => {
-    it('should log error when not initialized', async () => {
-      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    it('should initialize when not initialized', async () => {
       const { getSidePanelStateForWindow } = await import(
         '../src/sidepanel-state-manager'
       );
       getSidePanelStateForWindow(123);
-      expect(consoleErrorSpy).toHaveBeenCalledWith(
-        'Side panel state manager is not initialized.',
-        'Call initSidePanelStateManager() at the top of your background script before using any other functions.',
-      );
-      consoleErrorSpy.mockRestore();
+      expect(mockChrome.action.onClicked.addListener).toHaveBeenCalled();
+      expect(mockChrome.runtime.onConnect.addListener).toHaveBeenCalled();
     });
 
     it('should return undefined for non-existent window', async () => {
@@ -101,15 +97,11 @@ describe('sidepanel-state', () => {
   });
 
   describe('isWindowSidePanelVisible', () => {
-    it('should log error when not initialized', async () => {
-      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    it('should initialize when not initialized', async () => {
       const { isWindowSidePanelVisible } = await import('../src/sidepanel-state-manager');
       isWindowSidePanelVisible(123);
-      expect(consoleErrorSpy).toHaveBeenCalledWith(
-        'Side panel state manager is not initialized.',
-        'Call initSidePanelStateManager() at the top of your background script before using any other functions.',
-      );
-      consoleErrorSpy.mockRestore();
+      expect(mockChrome.action.onClicked.addListener).toHaveBeenCalled();
+      expect(mockChrome.runtime.onConnect.addListener).toHaveBeenCalled();
     });
 
     it('should return false for non-existent window', async () => {
@@ -492,16 +484,12 @@ describe('sidepanel-state', () => {
   });
 
   describe('state change listeners', () => {
-    it('should log error when not initialized', async () => {
-      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    it('should initialize when not initialized', async () => {
       const { onSidePanelStateChange } = await import('../src/sidepanel-state-manager');
       const listener = vi.fn();
       onSidePanelStateChange(listener);
-      expect(consoleErrorSpy).toHaveBeenCalledWith(
-        'Side panel state manager is not initialized.',
-        'Call initSidePanelStateManager() at the top of your background script before using any other functions.',
-      );
-      consoleErrorSpy.mockRestore();
+      expect(mockChrome.action.onClicked.addListener).toHaveBeenCalled();
+      expect(mockChrome.runtime.onConnect.addListener).toHaveBeenCalled();
     });
 
     it('should add and notify listeners on state change', async () => {

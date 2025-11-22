@@ -17,24 +17,6 @@ const listeners = new Set<SidePanelStateListener>();
 let isInitialized = false;
 
 /**
- * Ensures the side panel state manager has been initialized.
- *
- * Throws an error if `initSidePanelStateManager()` has not been called.
- *
- * ⚠️ Important: Always call `initSidePanelStateManager()` at the top
- * of your background script before using any other API functions
- * (getSidePanelStateForWindow, isWindowSidePanelVisible, onSidePanelStateChange, etc.).
- */
-function ensureInitialized(): void {
-  if (!isInitialized) {
-    console.error(
-      'Side panel state manager is not initialized.',
-      'Call initSidePanelStateManager() at the top of your background script before using any other functions.',
-    );
-  }
-}
-
-/**
  * Initializes the side panel state manager.
  * Sets up Chrome event listeners for action clicks and runtime connections.
  * This function should be called once before using other functions in this module.
@@ -95,6 +77,16 @@ export function initSidePanelStateManager(): void {
       });
     }
   });
+}
+
+/**
+ * Ensures the side panel state manager has been initialized.
+ */
+function ensureInitialized() {
+  if (!isInitialized) {
+    initSidePanelStateManager();
+    isInitialized = true;
+  }
 }
 
 /**

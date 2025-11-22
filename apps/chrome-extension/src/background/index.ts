@@ -1,4 +1,7 @@
-import { initSidePanelStateManager } from '@pixpilot/chrome-lifecycle';
+import {
+  initSidePanelStateManager,
+  onSidePanelStateChange,
+} from '@pixpilot/chrome-lifecycle';
 import { exampleMessage } from '../messages';
 
 console.warn('background is running');
@@ -9,3 +12,7 @@ exampleMessage.onMessage((data) => {
 });
 
 initSidePanelStateManager();
+
+onSidePanelStateChange((stateData) => {
+  console.warn('Side panel state changed: ', stateData);
+});
