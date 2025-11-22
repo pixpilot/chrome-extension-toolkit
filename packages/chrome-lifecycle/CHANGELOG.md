@@ -1,5 +1,11 @@
 # @pixpilot/chrome-lifecycle
 
+## 0.7.0
+
+### Minor Changes
+
+- update code to initialize using ensureInitialized
+
 ## 0.6.0
 
 ### Minor Changes
