@@ -1,5 +1,12 @@
 # chrome-extension
 
+## 1.0.3
+
+### Patch Changes
+
+- Updated dependencies
+  - @pixpilot/chrome-lifecycle@0.7.0
+
 ## 1.0.2
 
 ### Patch Changes
