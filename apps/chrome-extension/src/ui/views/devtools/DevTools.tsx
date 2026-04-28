@@ -1,9 +1,16 @@
+import { Counter } from '../../components/Counter';
+import { useCounter } from '../../components/use-counter';
+
 export function DevTools() {
+  const { count, add, minus } = useCounter();
+
   return (
     <main className="mx-auto p-4 text-center">
       <h3 className="my-8 text-2xl leading-5 font-extralight text-cyan-400 uppercase">
         DevTools Page
       </h3>
+      <Counter count={count} onAdd={add} onMinus={minus} />
+      <p className="my-4 text-lg">Value: {count}</p>
       <p className="my-2 text-xs text-gray-400">Chrome Extension Template</p>
     </main>
   );

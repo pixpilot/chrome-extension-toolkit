@@ -52,7 +52,7 @@ export function getManifest(isDev: boolean): ManifestV3Export {
         matches: [],
       },
     ],
-    permissions: ['sidePanel', 'storage'],
+    permissions: ['sidePanel', 'storage', 'tabs'],
     chrome_url_overrides: {
       newtab: 'newtab.html',
     },
