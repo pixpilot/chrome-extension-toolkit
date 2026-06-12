@@ -30,7 +30,7 @@ export function initializeSidePanelStateTracker(
   const { trackDocumentVisibility = true } = options;
 
   let port: chrome.runtime.Port | undefined;
-  let reconnectTimeout: number | undefined;
+  let reconnectTimeout: ReturnType<typeof setTimeout> | undefined;
   let reconnectAttempts = 0;
   let handleVisibilityChange: (() => void) | undefined;
   let isDisposed = false;
