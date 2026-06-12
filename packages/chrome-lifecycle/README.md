@@ -61,7 +61,7 @@ initSidePanelStateManager();
 
 **2. Side panel script (frontend):**
 
-Call `initializeSidePanelStateTracker()` when your side panel loads. This sets up visibility tracking and a heartbeat to keep the connection alive.
+Call `initializeSidePanelStateTracker()` when your side panel loads. This announces the panel state, tracks document visibility changes by default, and reconnects automatically if the Manifest V3 service worker restarts.
 
 ```typescript
 // sidepanel.ts
@@ -80,9 +80,15 @@ Initializes the backend state manager. **Must be called once at the top of your 
 
 ##### `initializeSidePanelStateTracker()`
 
-Initializes the frontend tracker in your side panel. Sets up visibility change detection and a heartbeat (every 15 seconds) to maintain the connection.
+Initializes the frontend tracker in your side panel. It reconnects automatically when the background service worker disconnects and, by default, reports `document.hidden` as hidden side panel state.
 
 **Returns:** Cleanup function to remove listeners and disconnect
+
+Options:
+
+| Property                    | Type      | Default | Description                                                                     |
+| --------------------------- | --------- | ------- | ------------------------------------------------------------------------------- |
+| `trackDocumentVisibility`   | `boolean` | `true`  | When true, `document.hidden` is reported as hidden state via `visibilitychange`. |
 
 ##### `isWindowSidePanelVisible(windowId)`
 

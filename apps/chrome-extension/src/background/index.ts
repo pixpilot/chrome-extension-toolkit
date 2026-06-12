@@ -1,5 +1,6 @@
 import {
   initSidePanelStateManager,
+  isWindowSidePanelVisible,
   onSidePanelStateChange,
 } from '@pixpilot/chrome-lifecycle';
 import { countBroadcast, countRequest, exampleMessage, tabChange } from '../messages';
@@ -39,7 +40,14 @@ function isNoListenerError(err: unknown): boolean {
   );
 }
 
-function notifyTabChange(tabId: number, urlFromEvent?: string): void {
+async function notifyTabChange(tabId: number, urlFromEvent?: string): Promise<void> {
+  const openTab = await chrome.tabs.get(tabId);
+  if (!isWindowSidePanelVisible(openTab.windowId)) {
+    // If the side panel isn't open, we can skip the effort of fetching the URL.
+    console.warn(`Background: tab changed but side panel is not visible → id=${tabId}`);
+    return;
+  }
+
   if (urlFromEvent != null && urlFromEvent.length > 0) {
     console.warn(`Background: tab changed → id=${tabId} url=${urlFromEvent}`);
     tabChange.send({ tabId, url: urlFromEvent }).catch((err: unknown) => {
@@ -69,11 +77,13 @@ function notifyTabChange(tabId: number, urlFromEvent?: string): void {
 chrome.tabs.onUpdated.addListener((tabId, changeInfo) => {
   // Only fire when the URL or status changes to avoid noise.
   if (changeInfo.url != null || changeInfo.status === 'complete') {
+    // eslint-disable-next-line ts/no-floating-promises
     notifyTabChange(tabId, changeInfo.url);
   }
 });
 
 chrome.tabs.onActivated.addListener((activeInfo) => {
+  // eslint-disable-next-line ts/no-floating-promises
   notifyTabChange(activeInfo.tabId);
 });
 
