@@ -86,9 +86,9 @@ Initializes the frontend tracker in your side panel. It reconnects automatically
 
 Options:
 
-| Property                    | Type      | Default | Description                                                                     |
-| --------------------------- | --------- | ------- | ------------------------------------------------------------------------------- |
-| `trackDocumentVisibility`   | `boolean` | `true`  | When true, `document.hidden` is reported as hidden state via `visibilitychange`. |
+| Property                  | Type      | Default | Description                                                                      |
+| ------------------------- | --------- | ------- | -------------------------------------------------------------------------------- |
+| `trackDocumentVisibility` | `boolean` | `true`  | When true, `document.hidden` is reported as hidden state via `visibilitychange`. |
 
 ##### `isWindowSidePanelVisible(windowId)`
 
