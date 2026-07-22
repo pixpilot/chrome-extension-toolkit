@@ -1,5 +1,15 @@
 # @pixpilot/chrome-lifecycle
 
+## 0.8.0
+
+### Minor Changes
+
+- enhance state tracking and reconnection logic
+
+### Patch Changes
+
+- remove unnecessary dependencies from tasks
+
 ## 0.7.0
 
 ### Minor Changes
