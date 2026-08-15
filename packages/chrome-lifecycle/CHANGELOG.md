@@ -1,5 +1,11 @@
 # @pixpilot/chrome-lifecycle
 
+## 0.10.0
+
+### Minor Changes
+
+- make onSidePanelStateChange report state changes only
+
 ## 0.9.0
 
 ### Minor Changes
