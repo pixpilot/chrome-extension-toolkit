@@ -127,12 +127,12 @@ unsubscribe();
 
 **Callback data:**
 
-| Property        | Type                                     | Description                                    |
-| --------------- | ---------------------------------------- | ---------------------------------------------- |
-| `windowId`      | `number`                                 | Chrome window ID                               |
-| `state`         | `'visible'` \| `'hidden'`                | Current side panel state                       |
+| Property        | Type                                     | Description                                     |
+| --------------- | ---------------------------------------- | ----------------------------------------------- |
+| `windowId`      | `number`                                 | Chrome window ID                                |
+| `state`         | `'visible'` \| `'hidden'`                | Current side panel state                        |
 | `previousState` | `'visible'` \| `'hidden'` \| `undefined` | State known before this one, `undefined` if new |
-| `reason`        | `string`                                 | What triggered the change                      |
+| `reason`        | `string`                                 | What triggered the change                       |
 
 **Returns:** Unsubscribe function
 
@@ -144,7 +144,7 @@ port disconnect). If you want transitions rather than reports, use
 
 ##### `onSidePanelShown(listener)`
 
-Fires only when a side panel *becomes* visible. This is the event to use for "the
+Fires only when a side panel _becomes_ visible. This is the event to use for "the
 panel is back on screen, resync it".
 
 ```typescript
@@ -157,11 +157,11 @@ const unsubscribe = onSidePanelShown(({ windowId, reason }) => {
 
 It covers three cases, distinguishable via `reason`:
 
-| `reason`            | When                                                                                    |
-| ------------------- | --------------------------------------------------------------------------------------- |
-| `document-load`     | A freshly loaded panel document                                                          |
-| `visibility-change` | A cached document Chrome is showing again — see the note on other extensions below       |
-| `reconnected`       | First report after the service worker restarted, so your background state was lost       |
+| `reason`            | When                                                                               |
+| ------------------- | ---------------------------------------------------------------------------------- |
+| `document-load`     | A freshly loaded panel document                                                    |
+| `visibility-change` | A cached document Chrome is showing again — see the note on other extensions below |
+| `reconnected`       | First report after the service worker restarted, so your background state was lost |
 
 **Callback data:** same as `onSidePanelStateChange`
 
