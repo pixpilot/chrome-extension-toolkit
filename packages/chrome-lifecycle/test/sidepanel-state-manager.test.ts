@@ -16,6 +16,11 @@ const mockChrome = {
       addListener: vi.fn(),
     },
   },
+  windows: {
+    onRemoved: {
+      addListener: vi.fn(),
+    },
+  },
 };
 
 // Mock Port
@@ -36,6 +41,77 @@ function importAndInit() {
     module.initSidePanelStateManager();
     return module;
   });
+}
+
+interface EmitOptions {
+  state: 'visible' | 'hidden';
+  windowId: number;
+  reason?: string;
+  type?: string;
+}
+
+/**
+ * Initializes the manager behind a freshly connected port and returns an `emit`
+ * helper that feeds it tracker messages the way a side panel document would.
+ */
+async function setupManager() {
+  const {
+    getSidePanelStateForWindow,
+    onSidePanelHidden,
+    onSidePanelShown,
+    onSidePanelStateChange,
+  } = await importAndInit();
+
+  const onConnectCallback = mockChrome.runtime.onConnect.addListener.mock.calls[0]![0]!;
+  const port = {
+    name: 'test-extension-id',
+    onMessage: { addListener: vi.fn() },
+    onDisconnect: { addListener: vi.fn() },
+    postMessage: vi.fn(),
+  };
+  onConnectCallback(port);
+
+  const handleMessage = port.onMessage.addListener.mock.calls[0]![0]!;
+
+  function emit({
+    state,
+    windowId,
+    reason = 'test',
+    type = 'side-panel-state-tracker',
+  }: EmitOptions) {
+    handleMessage({ type, state, reason, windowId });
+  }
+
+  return {
+    emit,
+    port,
+    getSidePanelStateForWindow,
+    onSidePanelHidden,
+    onSidePanelShown,
+    onSidePanelStateChange,
+  };
+}
+
+async function setupWithListener() {
+  const setup = await setupManager();
+  const listener = vi.fn();
+  setup.onSidePanelStateChange(listener);
+
+  return { ...setup, listener };
+}
+
+async function setupWithTransitionListeners() {
+  const setup = await setupManager();
+  const shown = vi.fn();
+  const hidden = vi.fn();
+
+  return {
+    ...setup,
+    shown,
+    hidden,
+    unsubscribeShown: setup.onSidePanelShown(shown),
+    unsubscribeHidden: setup.onSidePanelHidden(hidden),
+  };
 }
 
 describe('sidepanel-state', () => {
@@ -514,6 +590,7 @@ describe('sidepanel-state', () => {
         state: 'visible',
         reason: 'test',
         windowId: 123,
+        previousState: undefined,
       });
     });
 
@@ -552,6 +629,7 @@ describe('sidepanel-state', () => {
         state: 'hidden',
         reason: 'visibility-change',
         windowId: 123,
+        previousState: 'visible',
       });
     });
 
@@ -599,6 +677,7 @@ describe('sidepanel-state', () => {
         state: 'visible',
         reason: 'test',
         windowId: 123,
+        previousState: undefined,
       });
       expect(listener.mock.calls[0]![0]).not.toHaveProperty('timestamp');
       expect(listener.mock.calls[0]![0]).not.toHaveProperty('type');
@@ -669,16 +748,19 @@ describe('sidepanel-state', () => {
         state: 'visible',
         reason: 'test',
         windowId: 123,
+        previousState: undefined,
       });
       expect(listener2).toHaveBeenCalledWith({
         state: 'visible',
         reason: 'test',
         windowId: 123,
+        previousState: undefined,
       });
       expect(listener3).toHaveBeenCalledWith({
         state: 'visible',
         reason: 'test',
         windowId: 123,
+        previousState: undefined,
       });
     });
 
@@ -760,7 +842,220 @@ describe('sidepanel-state', () => {
         state: 'hidden',
         reason: 'port-disconnected',
         windowId: 123,
+        previousState: 'visible',
       });
+    });
+  });
+
+  describe('previousState', () => {
+    it('should be undefined for the first event of a window', async () => {
+      const { emit, listener } = await setupWithListener();
+
+      emit({ state: 'visible', windowId: 123 });
+
+      expect(listener.mock.calls[0]![0]).toMatchObject({ previousState: undefined });
+    });
+
+    it('should report the state that was already known', async () => {
+      const { emit, listener } = await setupWithListener();
+
+      emit({ state: 'visible', windowId: 123 });
+      emit({ state: 'visible', windowId: 123, reason: 'reconnected' });
+
+      expect(listener.mock.calls[1]![0]).toMatchObject({
+        state: 'visible',
+        previousState: 'visible',
+      });
+    });
+
+    it('should survive the hidden state being dropped from the visible map', async () => {
+      const { emit, listener, getSidePanelStateForWindow } = await setupWithListener();
+
+      emit({ state: 'visible', windowId: 123 });
+      emit({ state: 'hidden', windowId: 123 });
+
+      // The window is gone from the visible map...
+      expect(getSidePanelStateForWindow(123)).toBeUndefined();
+
+      // ...but the next event still knows what it was.
+      emit({ state: 'visible', windowId: 123 });
+
+      expect(listener.mock.calls[2]![0]).toMatchObject({
+        state: 'visible',
+        previousState: 'hidden',
+      });
+    });
+
+    it('should track windows independently', async () => {
+      const { emit, listener } = await setupWithListener();
+
+      emit({ state: 'visible', windowId: 123 });
+      emit({ state: 'visible', windowId: 456 });
+      emit({ state: 'hidden', windowId: 123 });
+
+      expect(listener.mock.calls[1]![0]).toMatchObject({
+        windowId: 456,
+        previousState: undefined,
+      });
+      expect(listener.mock.calls[2]![0]).toMatchObject({
+        windowId: 123,
+        previousState: 'visible',
+      });
+    });
+
+    it('should not be shifted by heartbeat messages', async () => {
+      const { emit, listener } = await setupWithListener();
+
+      emit({ state: 'visible', windowId: 123 });
+      emit({ state: 'hidden', windowId: 123, type: 'side-panel-heartbeat' });
+      emit({ state: 'hidden', windowId: 123 });
+
+      // The heartbeat notified nobody and left the baseline at 'visible'.
+      expect(listener).toHaveBeenCalledTimes(2);
+      expect(listener.mock.calls[1]![0]).toMatchObject({
+        state: 'hidden',
+        previousState: 'visible',
+      });
+    });
+
+    it('should forget a window once it is closed', async () => {
+      const { emit, listener } = await setupWithListener();
+
+      emit({ state: 'visible', windowId: 123 });
+
+      const onRemovedCallback =
+        mockChrome.windows.onRemoved.addListener.mock.calls[0]![0]!;
+      onRemovedCallback(123);
+
+      emit({ state: 'visible', windowId: 123 });
+
+      expect(listener.mock.calls[1]![0]).toMatchObject({ previousState: undefined });
+    });
+  });
+
+  describe('onSidePanelShown', () => {
+    it('should fire when a panel first becomes visible', async () => {
+      const { emit, shown } = await setupWithTransitionListeners();
+
+      emit({ state: 'visible', windowId: 123, reason: 'document-load' });
+
+      expect(shown).toHaveBeenCalledTimes(1);
+      expect(shown).toHaveBeenCalledWith({
+        state: 'visible',
+        reason: 'document-load',
+        windowId: 123,
+        previousState: undefined,
+      });
+    });
+
+    it('should not fire for a repeat of a state already known to be visible', async () => {
+      const { emit, shown } = await setupWithTransitionListeners();
+
+      emit({ state: 'visible', windowId: 123, reason: 'document-load' });
+      emit({ state: 'visible', windowId: 123, reason: 'reconnected' });
+      emit({ state: 'visible', windowId: 123, reason: 'visibility-change' });
+
+      expect(shown).toHaveBeenCalledTimes(1);
+    });
+
+    it('should fire again after the panel comes back from hidden', async () => {
+      const { emit, shown } = await setupWithTransitionListeners();
+
+      // Panel open, then another extension's side panel takes over the slot, then
+      // the user switches back to ours.
+      emit({ state: 'visible', windowId: 123, reason: 'document-load' });
+      emit({ state: 'hidden', windowId: 123, reason: 'visibility-change' });
+      emit({ state: 'visible', windowId: 123, reason: 'visibility-change' });
+
+      expect(shown).toHaveBeenCalledTimes(2);
+      expect(shown).toHaveBeenLastCalledWith({
+        state: 'visible',
+        reason: 'visibility-change',
+        windowId: 123,
+        previousState: 'hidden',
+      });
+    });
+
+    it('should fire on the first report after a service worker restart', async () => {
+      const { emit, shown } = await setupWithTransitionListeners();
+
+      // Nothing was recorded before, so a reconnect is the first thing we hear.
+      emit({ state: 'visible', windowId: 123, reason: 'reconnected' });
+
+      expect(shown).toHaveBeenCalledTimes(1);
+    });
+
+    it('should not fire on hidden events', async () => {
+      const { emit, shown } = await setupWithTransitionListeners();
+
+      emit({ state: 'visible', windowId: 123 });
+      shown.mockClear();
+
+      emit({ state: 'hidden', windowId: 123 });
+
+      expect(shown).not.toHaveBeenCalled();
+    });
+
+    it('should stop firing after unsubscribe', async () => {
+      const { emit, shown, unsubscribeShown } = await setupWithTransitionListeners();
+
+      unsubscribeShown();
+      emit({ state: 'visible', windowId: 123 });
+
+      expect(shown).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('onSidePanelHidden', () => {
+    it('should fire when a visible panel goes away', async () => {
+      const { emit, hidden } = await setupWithTransitionListeners();
+
+      emit({ state: 'visible', windowId: 123 });
+      emit({ state: 'hidden', windowId: 123, reason: 'visibility-change' });
+
+      expect(hidden).toHaveBeenCalledTimes(1);
+      expect(hidden).toHaveBeenCalledWith({
+        state: 'hidden',
+        reason: 'visibility-change',
+        windowId: 123,
+        previousState: 'visible',
+      });
+    });
+
+    it('should not fire twice for consecutive hidden reports', async () => {
+      const { emit, hidden } = await setupWithTransitionListeners();
+
+      emit({ state: 'visible', windowId: 123 });
+      emit({ state: 'hidden', windowId: 123, reason: 'visibility-change' });
+      emit({ state: 'hidden', windowId: 123, reason: 'port-disconnected' });
+
+      expect(hidden).toHaveBeenCalledTimes(1);
+    });
+
+    it('should not fire for a window that was never seen visible', async () => {
+      const { emit, hidden } = await setupWithTransitionListeners();
+
+      emit({ state: 'hidden', windowId: 123, reason: 'port-disconnected' });
+
+      expect(hidden).not.toHaveBeenCalled();
+    });
+
+    it('should not fire on visible events', async () => {
+      const { emit, hidden } = await setupWithTransitionListeners();
+
+      emit({ state: 'visible', windowId: 123 });
+
+      expect(hidden).not.toHaveBeenCalled();
+    });
+
+    it('should stop firing after unsubscribe', async () => {
+      const { emit, hidden, unsubscribeHidden } = await setupWithTransitionListeners();
+
+      emit({ state: 'visible', windowId: 123 });
+      unsubscribeHidden();
+      emit({ state: 'hidden', windowId: 123 });
+
+      expect(hidden).not.toHaveBeenCalled();
     });
   });
 });

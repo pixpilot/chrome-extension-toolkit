@@ -11,7 +11,15 @@ interface BackendSidePanelInfo extends SidePanelStateData {
 
 const sidePanels = new Map<number, BackendSidePanelInfo>();
 
-type SidePanelStateListener = (data: SidePanelStateChangeData) => void;
+/**
+ * Last state reported for a window, kept separately from `sidePanels` because that
+ * map only holds visible panels — it drops the entry on 'hidden' so
+ * `getSidePanelStateForWindow` can report "no panel". Transitions need the state we
+ * dropped, so it is remembered here until the window goes away.
+ */
+const lastKnownStates = new Map<number, SidePanelState>();
+
+export type SidePanelStateListener = (data: SidePanelStateChangeData) => void;
 const listeners = new Set<SidePanelStateListener>();
 
 let isInitialized = false;
@@ -77,6 +85,11 @@ export function initSidePanelStateManager(): void {
       });
     }
   });
+
+  chrome.windows.onRemoved.addListener((windowId) => {
+    sidePanels.delete(windowId);
+    lastKnownStates.delete(windowId);
+  });
 }
 
 /**
@@ -94,7 +107,10 @@ function ensureInitialized() {
  * Only triggers for 'side-panel-state-tracker' type messages.
  * Excludes timestamp from the data passed to listeners.
  */
-function notifyListeners(data: BackendSidePanelInfo) {
+function notifyListeners(
+  data: BackendSidePanelInfo,
+  previousState: SidePanelState | undefined,
+) {
   // Only notify for state tracker messages, NOT heartbeats
   if (data.type !== 'side-panel-state-tracker') {
     return;
@@ -105,6 +121,7 @@ function notifyListeners(data: BackendSidePanelInfo) {
     state: data.state,
     reason: data.reason,
     windowId: data.windowId,
+    previousState,
   };
 
   // Notify all listeners
@@ -119,15 +136,22 @@ function notifyListeners(data: BackendSidePanelInfo) {
 
 function setSidePanelState(data: BackendSidePanelInfo) {
   const { windowId, state } = data;
+  const previousState = lastKnownStates.get(windowId);
+
+  // Heartbeats are not state reports, so they must not shift the transition
+  // baseline that `onSidePanelShown` / `onSidePanelHidden` compare against.
+  if (data.type === 'side-panel-state-tracker') {
+    lastKnownStates.set(windowId, state);
+  }
 
   if (state === 'hidden') {
     sidePanels.delete(windowId);
-    notifyListeners(data);
+    notifyListeners(data, previousState);
     return;
   }
 
   sidePanels.set(windowId, data);
-  notifyListeners(data);
+  notifyListeners(data, previousState);
 }
 
 export function getSidePanelStateForWindow(windowId: number): SidePanelState | undefined {
@@ -161,4 +185,44 @@ export function onSidePanelStateChange(listener: SidePanelStateListener): () => 
   return () => {
     listeners.delete(listener);
   };
+}
+
+/**
+ * Adds a listener that fires only when a side panel *becomes* visible, skipping
+ * repeats of a state you already knew about.
+ *
+ * This is the event to use for "the panel is back on screen, resync it". It covers
+ * a freshly loaded document (`reason: 'document-load'`), a panel Chrome had cached
+ * while another extension's side panel took over the slot
+ * (`reason: 'visibility-change'`), and the first report after a service worker
+ * restart (`reason: 'reconnected'`).
+ *
+ * @param listener - Callback function that receives state change data
+ * @returns Unsubscribe function to remove the listener
+ */
+export function onSidePanelShown(listener: SidePanelStateListener): () => void {
+  return onSidePanelStateChange((data) => {
+    if (data.state === 'visible' && data.previousState !== 'visible') {
+      listener(data);
+    }
+  });
+}
+
+/**
+ * Adds a listener that fires only when a side panel *stops* being visible, skipping
+ * repeats of a state you already knew about.
+ *
+ * Nothing fires for a window that was never seen visible, so a service worker
+ * restart followed by a port disconnect stays quiet instead of reporting a close
+ * that the listener never saw open.
+ *
+ * @param listener - Callback function that receives state change data
+ * @returns Unsubscribe function to remove the listener
+ */
+export function onSidePanelHidden(listener: SidePanelStateListener): () => void {
+  return onSidePanelStateChange((data) => {
+    if (data.state === 'hidden' && data.previousState === 'visible') {
+      listener(data);
+    }
+  });
 }
