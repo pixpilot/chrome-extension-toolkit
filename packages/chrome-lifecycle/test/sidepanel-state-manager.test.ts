@@ -92,10 +92,10 @@ async function setupManager() {
   };
 }
 
-async function setupWithListener() {
+async function setupWithListener(options?: { includeRepeats?: boolean }) {
   const setup = await setupManager();
   const listener = vi.fn();
-  setup.onSidePanelStateChange(listener);
+  setup.onSidePanelStateChange(listener, options);
 
   return { ...setup, listener };
 }
@@ -847,6 +847,83 @@ describe('sidepanel-state', () => {
     });
   });
 
+  describe('repeated state reports', () => {
+    it('should not notify when a report repeats the known state', async () => {
+      const { emit, listener } = await setupWithListener();
+
+      emit({ state: 'visible', windowId: 123, reason: 'document-load' });
+      emit({ state: 'visible', windowId: 123, reason: 'reconnected' });
+      emit({ state: 'visible', windowId: 123, reason: 'visibility-change' });
+
+      expect(listener).toHaveBeenCalledTimes(1);
+      expect(listener).toHaveBeenCalledWith({
+        state: 'visible',
+        reason: 'document-load',
+        windowId: 123,
+        previousState: undefined,
+      });
+    });
+
+    it('should not notify for a second hidden report in a row', async () => {
+      const { emit, listener } = await setupWithListener();
+
+      emit({ state: 'visible', windowId: 123 });
+      emit({ state: 'hidden', windowId: 123, reason: 'visibility-change' });
+      emit({ state: 'hidden', windowId: 123, reason: 'port-disconnected' });
+
+      expect(listener).toHaveBeenCalledTimes(2);
+    });
+
+    it('should keep notifying on genuine changes', async () => {
+      const { emit, listener } = await setupWithListener();
+
+      emit({ state: 'visible', windowId: 123 });
+      emit({ state: 'hidden', windowId: 123 });
+      emit({ state: 'visible', windowId: 123 });
+
+      expect(listener).toHaveBeenCalledTimes(3);
+    });
+
+    it('should notify repeats when includeRepeats is set', async () => {
+      const { emit, listener } = await setupWithListener({ includeRepeats: true });
+
+      emit({ state: 'visible', windowId: 123, reason: 'document-load' });
+      emit({ state: 'visible', windowId: 123, reason: 'reconnected' });
+
+      expect(listener).toHaveBeenCalledTimes(2);
+      expect(listener).toHaveBeenLastCalledWith({
+        state: 'visible',
+        reason: 'reconnected',
+        windowId: 123,
+        previousState: 'visible',
+      });
+    });
+
+    it('should apply the option per listener', async () => {
+      const { emit, onSidePanelStateChange } = await setupManager();
+
+      const changesOnly = vi.fn();
+      const everything = vi.fn();
+      onSidePanelStateChange(changesOnly);
+      onSidePanelStateChange(everything, { includeRepeats: true });
+
+      emit({ state: 'visible', windowId: 123 });
+      emit({ state: 'visible', windowId: 123, reason: 'reconnected' });
+
+      expect(changesOnly).toHaveBeenCalledTimes(1);
+      expect(everything).toHaveBeenCalledTimes(2);
+    });
+
+    it('should treat a repeat in another window as a change', async () => {
+      const { emit, listener } = await setupWithListener();
+
+      emit({ state: 'visible', windowId: 123 });
+      emit({ state: 'visible', windowId: 456 });
+
+      expect(listener).toHaveBeenCalledTimes(2);
+    });
+  });
+
   describe('previousState', () => {
     it('should be undefined for the first event of a window', async () => {
       const { emit, listener } = await setupWithListener();
@@ -857,7 +934,7 @@ describe('sidepanel-state', () => {
     });
 
     it('should report the state that was already known', async () => {
-      const { emit, listener } = await setupWithListener();
+      const { emit, listener } = await setupWithListener({ includeRepeats: true });
 
       emit({ state: 'visible', windowId: 123 });
       emit({ state: 'visible', windowId: 123, reason: 'reconnected' });

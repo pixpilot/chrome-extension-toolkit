@@ -20,7 +20,28 @@ const sidePanels = new Map<number, BackendSidePanelInfo>();
 const lastKnownStates = new Map<number, SidePanelState>();
 
 export type SidePanelStateListener = (data: SidePanelStateChangeData) => void;
-const listeners = new Set<SidePanelStateListener>();
+
+export interface SidePanelStateChangeOptions {
+  /**
+   * Also deliver reports that repeat a state already known for that window — a
+   * reconnect while still visible, or a `port-disconnected` after the panel
+   * already reported itself hidden.
+   *
+   * Off by default, so listeners see state *changes*. Turn it on to observe the
+   * raw tracker feed, e.g. to tell "the document died" apart from "the document
+   * was hidden" when both arrive as `hidden`.
+   *
+   * @default false
+   */
+  includeRepeats?: boolean;
+}
+
+interface ListenerEntry {
+  listener: SidePanelStateListener;
+  includeRepeats: boolean;
+}
+
+const listeners = new Set<ListenerEntry>();
 
 let isInitialized = false;
 
@@ -103,9 +124,12 @@ function ensureInitialized() {
 }
 
 /**
- * Notifies all registered listeners about a state change.
+ * Notifies registered listeners about a state change.
  * Only triggers for 'side-panel-state-tracker' type messages.
  * Excludes timestamp from the data passed to listeners.
+ *
+ * Reports that repeat the state already known for the window reach only listeners
+ * that opted into them.
  */
 function notifyListeners(
   data: BackendSidePanelInfo,
@@ -124,8 +148,14 @@ function notifyListeners(
     previousState,
   };
 
+  const isRepeat = data.state === previousState;
+
   // Notify all listeners
-  listeners.forEach((listener) => {
+  listeners.forEach(({ listener, includeRepeats }) => {
+    if (isRepeat && !includeRepeats) {
+      return;
+    }
+
     try {
       listener(listenerData);
     } catch (error) {
@@ -170,28 +200,44 @@ export function isWindowSidePanelVisible(windowId: number): boolean {
 
 /**
  * Adds a listener for side panel state changes.
- * The listener will be called whenever the side panel state changes (visible/hidden).
+ *
+ * The listener is called when a window's side panel state actually changes. The
+ * tracker reports the same state more than once — it re-reports `visible` when it
+ * reconnects to a restarted service worker, and a panel can report `hidden` twice
+ * (a visibility change, then a port disconnect) — and those repeats are filtered
+ * out unless {@link SidePanelStateChangeOptions.includeRepeats} is set.
+ *
  * Note: Heartbeat messages do not trigger listeners, and timestamp is excluded from the data.
  *
  * @param listener - Callback function that receives state change data
+ * @param options - Delivery options
  * @returns Unsubscribe function to remove the listener
  */
-export function onSidePanelStateChange(listener: SidePanelStateListener): () => void {
+export function onSidePanelStateChange(
+  listener: SidePanelStateListener,
+  options: SidePanelStateChangeOptions = {},
+): () => void {
   ensureInitialized();
 
-  listeners.add(listener);
+  const entry: ListenerEntry = {
+    listener,
+    includeRepeats: options.includeRepeats === true,
+  };
+
+  listeners.add(entry);
 
   // Return unsubscribe function
   return () => {
-    listeners.delete(listener);
+    listeners.delete(entry);
   };
 }
 
 /**
- * Adds a listener that fires only when a side panel *becomes* visible, skipping
- * repeats of a state you already knew about.
+ * Adds a listener that fires only when a side panel *becomes* visible.
  *
- * This is the event to use for "the panel is back on screen, resync it". It covers
+ * A narrowed {@link onSidePanelStateChange} for code that only cares about one
+ * direction. This is the event to use for "the panel is back on screen, resync
+ * it". It covers
  * a freshly loaded document (`reason: 'document-load'`), a panel Chrome had cached
  * while another extension's side panel took over the slot
  * (`reason: 'visibility-change'`), and the first report after a service worker
@@ -209,10 +255,10 @@ export function onSidePanelShown(listener: SidePanelStateListener): () => void {
 }
 
 /**
- * Adds a listener that fires only when a side panel *stops* being visible, skipping
- * repeats of a state you already knew about.
+ * Adds a listener that fires only when a side panel *stops* being visible.
  *
- * Nothing fires for a window that was never seen visible, so a service worker
+ * A narrowed {@link onSidePanelStateChange} for code that only cares about one
+ * direction. Nothing fires for a window that was never seen visible, so a service worker
  * restart followed by a port disconnect stays quiet instead of reporting a close
  * that the listener never saw open.
  *

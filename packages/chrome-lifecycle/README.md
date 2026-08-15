@@ -110,7 +110,7 @@ import { getSidePanelStateForWindow } from '@pixpilot/chrome-lifecycle';
 const state = getSidePanelStateForWindow(windowId);
 ```
 
-##### `onSidePanelStateChange(listener)`
+##### `onSidePanelStateChange(listener, options?)`
 
 Listens for side panel state changes across all windows.
 
@@ -134,18 +134,41 @@ unsubscribe();
 | `previousState` | `'visible'` \| `'hidden'` \| `undefined` | State known before this one, `undefined` if new |
 | `reason`        | `string`                                 | What triggered the change                       |
 
+**Options:**
+
+| Property         | Type      | Default | Description                                              |
+| ---------------- | --------- | ------- | -------------------------------------------------------- |
+| `includeRepeats` | `boolean` | `false` | Also deliver reports that repeat the state already known |
+
 **Returns:** Unsubscribe function
 
-This fires for **every** state report, including repeats of a state you already know
-about — the tracker re-reports `visible` when it reconnects to a restarted service
-worker, and can report `hidden` twice in a row (a visibility change followed by a
-port disconnect). If you want transitions rather than reports, use
-`onSidePanelShown` / `onSidePanelHidden` below instead of comparing states yourself.
+This fires when a window's state actually **changes**. The tracker reports the same
+state more than once — it re-reports `visible` when it reconnects to a restarted
+service worker, and a panel can report `hidden` twice in a row (a visibility change,
+then a port disconnect) — and those repeats are filtered out, so listeners don't
+have to track the previous state themselves.
+
+Pass `{ includeRepeats: true }` to observe the raw tracker feed instead. The option
+is per listener, so one listener can watch changes while another watches everything:
+
+```typescript
+onSidePanelStateChange(({ windowId, state }) => syncPanel(windowId, state));
+
+onSidePanelStateChange(
+  ({ reason }) => {
+    // 'visibility-change' hidden means the panel was hidden;
+    // 'port-disconnected' hidden means its document went away.
+    if (reason === 'port-disconnected') dropDocumentCache();
+  },
+  { includeRepeats: true },
+);
+```
 
 ##### `onSidePanelShown(listener)`
 
-Fires only when a side panel _becomes_ visible. This is the event to use for "the
-panel is back on screen, resync it".
+`onSidePanelStateChange` narrowed to one direction, for code that only cares when a
+side panel _becomes_ visible. This is the event to use for "the panel is back on
+screen, resync it".
 
 ```typescript
 import { onSidePanelShown } from '@pixpilot/chrome-lifecycle';
@@ -169,9 +192,10 @@ It covers three cases, distinguishable via `reason`:
 
 ##### `onSidePanelHidden(listener)`
 
-Fires only when a side panel stops being visible. Nothing fires for a window that
-was never seen visible, so a service worker restart followed by a port disconnect
-stays quiet instead of reporting a close the listener never saw open.
+The same narrowing for the other direction: fires only when a side panel stops being
+visible. Nothing fires for a window that was never seen visible, so a service worker
+restart followed by a port disconnect stays quiet instead of reporting a close the
+listener never saw open.
 
 **Callback data:** same as `onSidePanelStateChange`
 
@@ -186,8 +210,8 @@ including anything stale it was showing before the switch.
 
 That surfaces here as `visibility-change`, never `document-load`. A listener that
 only refreshes on `document-load` will look correct until a user has two side panel
-extensions installed, and then silently serve stale content. `onSidePanelShown`
-handles both.
+extensions installed, and then silently serve stale content. `onSidePanelShown` — or
+`onSidePanelStateChange` checking for `state === 'visible'` — covers both.
 
 There is no Chrome API to ask whether your panel is the one currently on screen, so
 `document.hidden` in the panel document is the only available signal. Leave

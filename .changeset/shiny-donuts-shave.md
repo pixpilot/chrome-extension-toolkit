@@ -2,14 +2,17 @@
 '@pixpilot/chrome-lifecycle': minor
 ---
 
-Add `onSidePanelShown` and `onSidePanelHidden` for side panel visibility transitions.
+Make `onSidePanelStateChange` report state *changes*, and add `onSidePanelShown` /
+`onSidePanelHidden`.
 
-`onSidePanelStateChange` fires for every state report, including repeats of a state
-the listener already knew about — a reconnect while still visible, or a visibility
-change followed by a port disconnect. Every consumer that wanted "the panel just
-came back, resync it" had to keep its own `Map<windowId, state>` to dedupe.
+**Behavior change:** `onSidePanelStateChange` previously fired for every state report
+the tracker sent, including repeats of a state the listener already knew about — a
+reconnect while still visible, or a `port-disconnected` after the panel had already
+reported itself hidden. It now fires only when a window's state actually changes.
+Pass `{ includeRepeats: true }` to get the old raw feed; the option is per listener.
 
-State change data now carries `previousState`, and the two new helpers filter on it:
+State change data carries a new `previousState` field, and two narrowed listeners
+are available for code that only cares about one direction:
 
 ```typescript
 onSidePanelShown(({ windowId }) => refreshPanelContents(windowId));
