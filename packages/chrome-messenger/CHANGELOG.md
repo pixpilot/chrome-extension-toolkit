@@ -1,5 +1,11 @@
 # @pixpilot/chrome-messenger
 
+## 0.6.2
+
+### Patch Changes
+
+- 25449ad: test ci
+
 ## 0.6.1
 
 ### Patch Changes

@@ -1,5 +1,11 @@
 # @pixpilot/chrome-storage
 
+## 1.0.1
+
+### Patch Changes
+
+- 25449ad: test ci
+
 ## 1.0.0
 
 ### Major Changes
