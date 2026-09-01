@@ -1053,13 +1053,31 @@ describe('sidepanel-state', () => {
       });
     });
 
-    it('should fire on the first report after a service worker restart', async () => {
+    it('should not fire on the first report after a service worker restart', async () => {
       const { emit, shown } = await setupWithTransitionListeners();
 
-      // Nothing was recorded before, so a reconnect is the first thing we hear.
+      // A restarted worker knows nothing about the window, so the reconnect arrives
+      // with no previous state — but the panel document never went away, so nothing
+      // was shown.
       emit({ state: 'visible', windowId: 123, reason: 'reconnected' });
 
+      expect(shown).not.toHaveBeenCalled();
+    });
+
+    it('should still fire for a real show that follows a restart', async () => {
+      const { emit, shown } = await setupWithTransitionListeners();
+
+      emit({ state: 'visible', windowId: 123, reason: 'reconnected' });
+      emit({ state: 'hidden', windowId: 123, reason: 'visibility-change' });
+      emit({ state: 'visible', windowId: 123, reason: 'visibility-change' });
+
       expect(shown).toHaveBeenCalledTimes(1);
+      expect(shown).toHaveBeenLastCalledWith({
+        state: 'visible',
+        reason: 'visibility-change',
+        windowId: 123,
+        previousState: 'hidden',
+      });
     });
 
     it('should not fire on hidden events', async () => {
@@ -1113,6 +1131,17 @@ describe('sidepanel-state', () => {
       const { emit, hidden } = await setupWithTransitionListeners();
 
       emit({ state: 'hidden', windowId: 123, reason: 'port-disconnected' });
+
+      expect(hidden).not.toHaveBeenCalled();
+    });
+
+    it('should not fire when a reconnect reports the panel as hidden', async () => {
+      const { emit, hidden } = await setupWithTransitionListeners();
+
+      emit({ state: 'visible', windowId: 123 });
+      // The worker restarted while the panel document sat hidden behind another
+      // extension's panel. The reconnect reports that state, it does not create it.
+      emit({ state: 'hidden', windowId: 123, reason: 'reconnected' });
 
       expect(hidden).not.toHaveBeenCalled();
     });

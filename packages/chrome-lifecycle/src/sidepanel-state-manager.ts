@@ -237,17 +237,26 @@ export function onSidePanelStateChange(
  *
  * A narrowed {@link onSidePanelStateChange} for code that only cares about one
  * direction. This is the event to use for "the panel is back on screen, resync
- * it". It covers
- * a freshly loaded document (`reason: 'document-load'`), a panel Chrome had cached
- * while another extension's side panel took over the slot
- * (`reason: 'visibility-change'`), and the first report after a service worker
- * restart (`reason: 'reconnected'`).
+ * it". It covers a freshly loaded document (`reason: 'document-load'`) and a panel
+ * Chrome had cached while another extension's side panel took over the slot
+ * (`reason: 'visibility-change'`).
+ *
+ * Reconnects (`reason: 'reconnected'`) are not shows and never fire this. The
+ * tracker reconnects when the service worker is torn down and restarted, and the
+ * panel document lives through that untouched — nothing appeared, so nothing needs
+ * resyncing. It has to be excluded explicitly because a restarted worker has no
+ * record of the window, leaving `previousState` empty, which would otherwise make
+ * every recycle look like a fresh show.
  *
  * @param listener - Callback function that receives state change data
  * @returns Unsubscribe function to remove the listener
  */
 export function onSidePanelShown(listener: SidePanelStateListener): () => void {
   return onSidePanelStateChange((data) => {
+    if (data.reason === 'reconnected') {
+      return;
+    }
+
     if (data.state === 'visible' && data.previousState !== 'visible') {
       listener(data);
     }
@@ -260,13 +269,19 @@ export function onSidePanelShown(listener: SidePanelStateListener): () => void {
  * A narrowed {@link onSidePanelStateChange} for code that only cares about one
  * direction. Nothing fires for a window that was never seen visible, so a service worker
  * restart followed by a port disconnect stays quiet instead of reporting a close
- * that the listener never saw open.
+ * that the listener never saw open. Reconnects are excluded for the same reason
+ * they are in {@link onSidePanelShown}: they report the state the panel is already
+ * in, not a move into it.
  *
  * @param listener - Callback function that receives state change data
  * @returns Unsubscribe function to remove the listener
  */
 export function onSidePanelHidden(listener: SidePanelStateListener): () => void {
   return onSidePanelStateChange((data) => {
+    if (data.reason === 'reconnected') {
+      return;
+    }
+
     if (data.state === 'hidden' && data.previousState === 'visible') {
       listener(data);
     }
