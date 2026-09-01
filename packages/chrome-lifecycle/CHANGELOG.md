@@ -1,5 +1,11 @@
 # @pixpilot/chrome-lifecycle
 
+## 0.10.2
+
+### Patch Changes
+
+- reconnect cause trigger callbacks
+
 ## 0.10.1
 
 ### Patch Changes
