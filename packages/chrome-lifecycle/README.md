@@ -216,3 +216,9 @@ extensions installed, and then silently serve stale content. `onSidePanelShown` 
 There is no Chrome API to ask whether your panel is the one currently on screen, so
 `document.hidden` in the panel document is the only available signal. Leave
 `trackDocumentVisibility` enabled if you rely on this.
+
+## Notes
+
+[Side panel refresh — fixed bugs and live edges](docs/side-panel-refresh.md) — why the
+transition helpers ignore reconnects, what `isPanelReload` is for, and the edge cases
+around keeping a panel in step with the active tab.
