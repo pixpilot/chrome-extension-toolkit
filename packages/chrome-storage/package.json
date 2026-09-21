@@ -11,6 +11,9 @@
     "url": "https://github.com/pixpilot/chrome-extension-toolkit.git",
     "directory": "packages/chrome-storage"
   },
+  "bugs": {
+    "url": "https://github.com/pixpilot/chrome-extension-toolkit/issues"
+  },
   "keywords": [],
   "exports": "./src/index.ts",
   "files": [
